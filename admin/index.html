@@ -70,14 +70,13 @@
           <li class="nav-item"><a class="nav-link" href="events.html">Events</a></li>
         </ul>
       </nav>
-      <p>Create an account or login to start your journey</p>
 
       <!-- Search Pins Section -->
       <div class="mb-4">
         <h6>Search Pins</h6>
         <form id="searchForm">
           <div class="mb-3">
-            <input type="text" class="form-control" id="searchInput" placeholder="Search by title or description">
+            <input type="text" class="form-control" id="searchInput" placeholder="Search by description">
           </div>
           <button type="submit" class="btn btn-primary">Search</button>
         </form>
@@ -162,77 +161,44 @@
       subdomains: 'abc'
     }).addTo(earth);
 
-    // Global array to store markers for deletion
-    var markers = [];
-
-    // Helper to generate unique IDs for pins
-    function generateId() {
-      return 'pin-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-    }
-
-    // Updated function to add a pin with a unique ID and a delete button in its popup
-    function addPin(lat, lng, title, description, song, id) {
-      if (!id) {
-        id = generateId();
-      }
+    // Updated functions to handle extended pin data (title, description, song)
+    function addPin(lat, lng, title, description, song) {
       var marker = WE.marker([lat, lng]).addTo(earth);
-      marker.pinId = id;
-      markers.push(marker);
       var popupContent = "<strong>" + title + "</strong><br>" + description;
       if (song) {
         popupContent += "<br><a href='" + song + "' target='_blank'>Song Link</a>";
       }
-      popupContent += "<br><button class='btn btn-sm btn-danger' onclick=\"deletePin('" + id + "')\">Delete Pin</button>";
       marker.bindPopup(popupContent);
-      return id;
     }
 
-    // Save the pin along with its unique ID in localStorage
-    function savePin(lat, lng, title, description, song, id) {
+    function savePin(lat, lng, title, description, song) {
       var pins = JSON.parse(localStorage.getItem('pins')) || [];
-      pins.push({ id: id, lat: lat, lng: lng, title: title, description: description, song: song });
+      pins.push({ lat: lat, lng: lng, title: title, description: description, song: song });
       localStorage.setItem('pins', JSON.stringify(pins));
     }
 
-    // Load saved pins and add them to the map (and the markers array)
     function loadPins() {
       var pins = JSON.parse(localStorage.getItem('pins')) || [];
       pins.forEach(function(pin) {
-        addPin(pin.lat, pin.lng, pin.title || "Untitled", pin.description, pin.song, pin.id);
-      });
-    }
-
-    // Delete a pin from both localStorage and the map
-    function deletePin(id) {
-      // Remove pin from localStorage
-      var pins = JSON.parse(localStorage.getItem('pins')) || [];
-      var newPins = pins.filter(function(pin) {
-        return pin.id !== id;
-      });
-      localStorage.setItem('pins', JSON.stringify(newPins));
-
-      // Remove marker from map and update markers array
-      markers = markers.filter(function(marker) {
-        if (marker.pinId === id) {
-          earth.removeLayer(marker);
-          return false;
-        }
-        return true;
+        var title = pin.title || "Untitled";
+        addPin(pin.lat, pin.lng, title, pin.description, pin.song);
       });
     }
 
     // Load saved pins on page load
     loadPins();
 
-    // Handle manual add pin form submission (from sidebar)
+    // Handle manual add pin form submission (from sidebar) – remains unchanged
     document.getElementById('pinForm').addEventListener('submit', function(e) {
       e.preventDefault();
       var lat = parseFloat(document.getElementById('latitude').value);
       var lng = parseFloat(document.getElementById('longitude').value);
       var description = document.getElementById('description').value;
       // For manual add, set title as 'Untitled' and no song link
-      var id = addPin(lat, lng, "Untitled", description, "");
-      savePin(lat, lng, "Untitled", description, "", id);
+      addPin(lat, lng, "Untitled", description, "");
+      var pins = JSON.parse(localStorage.getItem('pins')) || [];
+      pins.push({ lat: lat, lng: lng, title: "Untitled", description: description, song: "" });
+      localStorage.setItem('pins', JSON.stringify(pins));
       e.target.reset();
     });
 
@@ -244,8 +210,8 @@
       var title = document.getElementById('pinTitle').value;
       var description = document.getElementById('pinDescription').value;
       var song = document.getElementById('pinSong').value;
-      var id = addPin(lat, lng, title, description, song);
-      savePin(lat, lng, title, description, song, id);
+      addPin(lat, lng, title, description, song);
+      savePin(lat, lng, title, description, song);
       // Hide the modal after submission
       var modalEl = document.getElementById('pinModal');
       var modal = bootstrap.Modal.getInstance(modalEl);
