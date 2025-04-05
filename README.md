@@ -1,2 +1,3 @@
-# Spot-on-CIT-Senior-Design
-Spot-on CIT Senior Design
+# CIT-CSUN-Senior-Design
+Senior Design Technologies
+Update. 1
