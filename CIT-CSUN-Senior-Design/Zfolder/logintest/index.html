@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>WebGL Earth Example</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      #earth_div {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="earth_div"></div>
+    <!-- Load WebGL Earth API -->
+    <script src="https://www.webglearth.com/v2/api.js"></script>
+    <script>
+      // Create the globe in the 'earth_div' element
+      var earth = new WE.map('earth_div');
+      // Set initial view with [latitude, longitude] and a zoom level
+      earth.setView([0, 0], 2);
+      
+      // Add a tile layer using OpenStreetMap tiles
+      WE.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        subdomains: 'abc'
+      }).addTo(earth);
+
+      // Optionally, add a marker to test interactivity
+      var marker = WE.marker([0, 0]).addTo(earth);
+      marker.bindPopup("Hello, World!").openPopup();
+    </script>
+  </body>
+</html>
