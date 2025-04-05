@@ -1,3 +1,3 @@
 # CIT-CSUN-Senior-Design
 Senior Design Technologies
-Update. 1
+Project port over from the original CIT-CSUN-Senior-Design
