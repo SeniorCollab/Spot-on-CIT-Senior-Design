@@ -41,10 +41,184 @@
   <video autoplay muted loop id="bgvideo">
     <source src="stars.mp4" type="video/mp4">
   </video>
+
   <div id="earth_div"></div>
-  <button class="btn btn-primary" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+
+  <button class="btn btn-primary" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
     <span class="navbar-toggler-icon"></span>
   </button>
-  <!-- Firebase integration and full UI handled via script below -->
+
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title">Spot On</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+      <h6>Add a New Pin</h6>
+      <form id="pinForm">
+        <div class="mb-3">
+          <label for="latitude" class="form-label">Latitude</label>
+          <input type="number" class="form-control" id="latitude" required>
+        </div>
+        <div class="mb-3">
+          <label for="longitude" class="form-label">Longitude</label>
+          <input type="number" class="form-control" id="longitude" required>
+        </div>
+        <div class="mb-3">
+          <label for="description" class="form-label">Description</label>
+          <input type="text" class="form-control" id="description" required>
+        </div>
+        <button type="submit" class="btn btn-success">Add Pin</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal fade" id="pinModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="modalPinForm">
+          <div class="modal-header">
+            <h5 class="modal-title">Pin Details</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="text" class="form-control mb-2" id="pinTitle" placeholder="Title" required>
+            <textarea class="form-control mb-2" id="pinDescription" placeholder="Description" required></textarea>
+            <input type="url" class="form-control mb-2" id="pinSong" placeholder="Song Link (optional)">
+            <input type="number" class="form-control mb-2" id="modalLatitude" readonly>
+            <input type="number" class="form-control mb-2" id="modalLongitude" readonly>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Save Pin</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.webglearth.com/v2/api.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import {
+      getAuth,
+      signInAnonymously,
+      setPersistence,
+      browserLocalPersistence,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+    import {
+      getDatabase,
+      ref,
+      push,
+      set,
+      onValue
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
+      authDomain: "spoton-cit481.firebaseapp.com",
+      databaseURL: "https://spoton-cit481-default-rtdb.firebaseio.com",
+      projectId: "spoton-cit481",
+      storageBucket: "spoton-cit481.appspot.com",
+      messagingSenderId: "753873898041",
+      appId: "1:753873898041:web:bde5e8f86aea63b175dbe8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    let currentUser = null;
+
+    setPersistence(auth, browserLocalPersistence)
+      .then(() => signInAnonymously(auth))
+      .catch((error) => console.error("Persistence error:", error.message));
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+        loadPinsFromFirebase();
+      }
+    });
+
+    const earth = new WE.map('earth_div');
+    earth.setView([0, 0], 2);
+    WE.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      subdomains: 'abc'
+    }).addTo(earth);
+
+    function addPin(lat, lng, title, description, song) {
+      const marker = WE.marker([lat, lng]).addTo(earth);
+      let content = `<strong>${title}</strong><br>${description}`;
+      if (song) content += `<br><a href="${song}" target="_blank">Song</a>`;
+      marker.bindPopup(content);
+    }
+
+    function saveToFirebase(lat, lng, title, description, song) {
+      if (!currentUser) return;
+      const newRef = push(ref(db, "pins"));
+      set(newRef, {
+        title,
+        description,
+        songLink: song,
+        geolocation: { lat, lng },
+        userId: currentUser.uid,
+        timestamp: Date.now()
+      }).then(() => {
+        addPin(lat, lng, title, description, song);
+        alert("✅ Pin saved!");
+      }).catch(err => alert("❌ Error saving pin: " + err.message));
+    }
+
+    function loadPinsFromFirebase() {
+      const pinsRef = ref(db, "pins");
+      onValue(pinsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          Object.values(data).forEach(pin => {
+            const { title, description, songLink, geolocation } = pin;
+            if (geolocation) {
+              addPin(geolocation.lat, geolocation.lng, title || "Untitled", description, songLink);
+            }
+          });
+        }
+      });
+    }
+
+    document.getElementById('pinForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const lat = parseFloat(document.getElementById('latitude').value);
+      const lng = parseFloat(document.getElementById('longitude').value);
+      const description = document.getElementById('description').value;
+      saveToFirebase(lat, lng, "Untitled", description, "");
+      e.target.reset();
+    });
+
+    document.getElementById('modalPinForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const lat = parseFloat(document.getElementById('modalLatitude').value);
+      const lng = parseFloat(document.getElementById('modalLongitude').value);
+      const title = document.getElementById('pinTitle').value || "Untitled";
+      const description = document.getElementById('pinDescription').value;
+      const song = document.getElementById('pinSong').value;
+      saveToFirebase(lat, lng, title, description, song);
+      bootstrap.Modal.getInstance(document.getElementById('pinModal')).hide();
+    });
+
+    document.getElementById('savePinBtn').addEventListener('click', () => {
+      document.getElementById('modalPinForm').dispatchEvent(new Event('submit', { cancelable: true }));
+    });
+
+    earth.on('click', (event) => {
+      document.getElementById('modalLatitude').value = event.latlng.lat;
+      document.getElementById('modalLongitude').value = event.latlng.lng;
+      document.getElementById('pinTitle').value = "";
+      document.getElementById('pinDescription').value = "";
+      document.getElementById('pinSong').value = "";
+      new bootstrap.Modal(document.getElementById('pinModal')).show();
+    });
+  </script>
 </body>
 </html>
