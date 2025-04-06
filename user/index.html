@@ -138,7 +138,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-    import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+    import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
@@ -237,14 +237,18 @@
       document.getElementById('modalPinForm').dispatchEvent(new Event('submit', { cancelable: true }));
     });
 
-    earth.on('click', event => {
-      document.getElementById('modalLatitude').value = event.latlng.lat;
-      document.getElementById('modalLongitude').value = event.latlng.lng;
-      document.getElementById('pinTitle').value = "";
-      document.getElementById('pinDescription').value = "";
-      document.getElementById('pinSong').value = "";
-      new bootstrap.Modal(document.getElementById('pinModal')).show();
-    });
+earth.on('click', function(event) {
+  if (event && event.latlng) {
+    document.getElementById('modalLatitude').value = event.latlng.lat;
+    document.getElementById('modalLongitude').value = event.latlng.lng;
+    document.getElementById('pinTitle').value = "";
+    document.getElementById('pinDescription').value = "";
+    document.getElementById('pinSong').value = "";
+    const pinModal = new bootstrap.Modal(document.getElementById('pinModal'));
+    pinModal.show();
+  }
+});
+
   </script>
 </body>
 </html>
