@@ -156,7 +156,12 @@
 
     let currentUser = null;
     signInAnonymously(auth).catch(err => alert("Auth error: " + err.message));
-    onAuthStateChanged(auth, user => { if (user) currentUser = user; });
+    onAuthStateChanged(auth, user => {
+    if (user) {
+    currentUser = user;
+    loadPinsFromFirebase();
+    }
+    });
 
     const earth = new WE.map('earth_div');
     earth.setView([0, 0], 2);
@@ -170,6 +175,26 @@
       let content = `<strong>${title}</strong><br>${description}`;
       if (song) content += `<br><a href="${song}" target="_blank">Song Link</a>`;
       marker.bindPopup(content);
+    }
+
+    function loadPinsFromFirebase() {
+      const pinsRef = ref(db, "pins");
+      onValue(pinsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          Object.values(data).forEach(pin => {
+            if (pin.geolocation && pin.title && pin.description) {
+              addPin(
+                pin.geolocation.lat,
+                pin.geolocation.lng,
+                pin.title,
+                pin.description,
+                pin.songLink || ""
+              );
+            }
+          });
+        }
+      });
     }
 
     function saveToFirebase(lat, lng, title, description, song) {
