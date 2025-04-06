@@ -173,14 +173,17 @@
     function addPin(lat, lng, title, description, song) {
       const marker = WE.marker([lat, lng]).addTo(earth);
       let content = `<strong>${title}</strong><br>${description}`;
-      if (song) content += `<br><a href="${song}" target="_blank">Song Link</a>`;
-      marker.bindPopup(content);
-    }
+      if (song) {
+        popupContent += `<br><a href="${song}" target="_blank">Song Link</a>`;
+      }
+  marker.bindPopup(popupContent);
+}
 
     function loadPinsFromFirebase() {
       const pinsRef = ref(db, "pins");
       onValue(pinsRef, (snapshot) => {
         const data = snapshot.val();
+        console.log("Firebase data loaded:", data); // to help debug
         if (data) {
           Object.values(data).forEach(pin => {
             if (pin.geolocation && pin.title && pin.description) {
