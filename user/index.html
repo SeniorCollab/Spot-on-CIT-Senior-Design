@@ -157,11 +157,14 @@
     let currentUser = null;
     signInAnonymously(auth).catch(err => alert("Auth error: " + err.message));
     onAuthStateChanged(auth, user => {
-    if (user) {
-    currentUser = user;
-    loadPinsFromFirebase();
-    }
-    });
+      if (user) {
+        console.log("✅ Firebase Auth success:", user.uid);
+        currentUser = user;
+        loadPinsFromFirebase();
+      } else {
+    console.log("Not logged in");
+  }
+});
 
     const earth = new WE.map('earth_div');
     earth.setView([0, 0], 2);
