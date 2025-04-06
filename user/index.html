@@ -182,9 +182,6 @@ function addPin(lat, lng, title, description, song) {
   marker.bindPopup(popupContent);
 }
 
-  marker.bindPopup(popupContent);
-}
-
 function loadPinsFromFirebase() {
   console.log("Attempting to load pins from Firebase...");
   const pinsRef = ref(db, "pins");
