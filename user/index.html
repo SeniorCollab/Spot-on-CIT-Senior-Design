@@ -182,26 +182,29 @@
   marker.bindPopup(popupContent);
 }
 
-    function loadPinsFromFirebase() {
-      const pinsRef = ref(db, "pins");
-      onValue(pinsRef, (snapshot) => {
-        const data = snapshot.val();
-        console.log("Firebase data loaded:", data); // to help debug
-        if (data) {
-          Object.values(data).forEach(pin => {
-            if (pin.geolocation && pin.title && pin.description) {
-              addPin(
-                pin.geolocation.lat,
-                pin.geolocation.lng,
-                pin.title,
-                pin.description,
-                pin.songLink || ""
-              );
-            }
-          });
+function loadPinsFromFirebase() {
+  console.log("Attempting to load pins from Firebase...");
+  const pinsRef = ref(db, "pins");
+  onValue(pinsRef, (snapshot) => {
+    const data = snapshot.val();
+    console.log("Data returned from Firebase:", data);
+
+    if (data) {
+      Object.values(data).forEach(pin => {
+        if (pin.geolocation && pin.title && pin.description) {
+          addPin(
+            pin.geolocation.lat,
+            pin.geolocation.lng,
+            pin.title,
+            pin.description,
+            pin.songLink || ""
+          );
         }
       });
     }
+  });
+}
+
 
     function saveToFirebase(lat, lng, title, description, song) {
       if (!currentUser) return alert("User not authenticated");
