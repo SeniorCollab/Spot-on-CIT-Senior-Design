@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register - Spot On</title>
+
+  <!-- Google Fonts & Bootstrap -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f5f8fc;
+      padding-top: 60px;
+    }
+    #offcanvasToggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1050;
+      border: none;
+      background-color: #007bff;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .register-container {
+      max-width: 500px;
+      margin: auto;
+      background-color: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .form-floating label {
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Offcanvas Toggle -->
+  <button class="btn" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <!-- Offcanvas Navigation -->
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Spot On</h5>
+      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+      <nav class="navbar">
+        <ul class="navbar-nav">
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="pins.html">Pins</a></li>
+          <li class="nav-item"><a class="nav-link" href="songs.html">Songs</a></li>
+          <li class="nav-item"><a class="nav-link" href="events.html">Events</a></li>
+          <li class="nav-item"><a class="nav-link" href="shop.html">Store</a></li>
+          <li class="nav-item"><a class="nav-link" href="user/userlogin.html">User</a></li>
+          <li class="nav-item"><a class="nav-link" href="admin/adminlogin.html">Admin</a></li>
+          <li class="nav-item"><a class="nav-link active" href="register.html">Sign Up</a></li>
+        </ul>
+      </nav>
+      <p class="mt-3">Create an account or login to start your journey.</p>
+    </div>
+  </div>
+
+  <!-- Register Form -->
+  <div class="container">
+    <div class="register-container mt-5">
+      <h2 class="mb-4 text-center">Create Your Account</h2>
+      <form id="registerForm">
+        <div class="form-floating mb-3">
+          <input type="text" class="form-control" id="fullName" placeholder="Full Name" required>
+          <label for="fullName">Full Name</label>
+        </div>
+        <div class="form-floating mb-3">
+          <input type="email" class="form-control" id="email" placeholder="Email" required>
+          <label for="email">Email address</label>
+        </div>
+        <div class="form-floating mb-3">
+          <input type="password" class="form-control" id="password" placeholder="Password" required>
+          <label for="password">Password</label>
+        </div>
+        <div class="form-floating mb-4">
+          <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm Password" required>
+          <label for="confirmPassword">Confirm Password</label>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+        <p class="mt-3 text-center text-muted">Already have an account? <a href="user/userlogin.html">Login here</a>.</p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    document.getElementById("registerForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById("fullName").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+
+      if (!name || !email || !password || !confirmPassword) {
+        alert("All fields are required.");
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        alert("Passwords do not match!");
+        return;
+      }
+
+      // Placeholder - plug this into Firebase later
+      console.log("Registering user:", {
+        name: name,
+        email: email,
+        password: password
+      });
+
+      alert("Account created successfully (placeholder).");
+
+      // Reset form
+      document.getElementById("registerForm").reset();
+    });
+  </script>
+
+</body>
+</html>

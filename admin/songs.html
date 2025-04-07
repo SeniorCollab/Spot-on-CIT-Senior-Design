@@ -1,43 +1,167 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Songs</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Songs - Spot On</title>
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/styles.css">
+  <!-- Google Fonts & Bootstrap -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f5f8fc;
+      color: #333;
+      padding-top: 60px;
+    }
+    #offcanvasToggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1050;
+      border: none;
+      background-color: #007bff;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .page-header {
+      background: linear-gradient(135deg, #007bff, #6610f2);
+      color: white;
+      padding: 2rem;
+      text-align: center;
+      border-radius: 0.5rem;
+      margin-bottom: 2rem;
+    }
+    .song-card {
+      border: none;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      overflow: hidden;
+      transition: transform 0.3s ease;
+    }
+    .song-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    }
+    iframe {
+      width: 100%;
+      height: 250px;
+      border: none;
+    }
+  </style>
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="index.html">Spot On</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="pins.php">Pins</a></li>
-                    <li class="nav-item"><a class="nav-link" href="songs.php">Songs</a></li>
-                    <li class="nav-item"><a class="nav-link" href="items.php">Items</a></li>
-                    <li class="nav-item"><a class="nav-link" href="events.php">Events</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+  <!-- Offcanvas Toggle -->
+  <button class="btn" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+    <span class="navbar-toggler-icon"></span>
+  </button>
 
-    <!-- Main Content -->
-    <div class="container mt-4">
-        <h1>Songs</h1>
-        <p>Here you can view and manage all your map songs.</p>
-        <!-- Content specific to this page -->
+  <!-- Offcanvas Navigation -->
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Spot On</h5>
+      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+      <nav class="navbar">
+        <ul class="navbar-nav">
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="pins.html">Pins</a></li>
+          <li class="nav-item"><a class="nav-link active" href="songs.html">Songs</a></li>
+          <li class="nav-item"><a class="nav-link" href="events.html">Events</a></li>
+          <li class="nav-item"><a class="nav-link" href="shop.html">Store</a></li>
+        </ul>
+      </nav>
+      <p class="mt-3">Create an account or login to start your journey.</p>
+    </div>
+  </div>
+
+  <!-- Page Header -->
+  <div class="container">
+    <div class="page-header">
+      <h1 class="display-5">Your Saved Songs</h1>
+      <p class="lead">Enjoy and revisit all the music saved to your global pins.</p>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <!-- Songs List -->
+    <div id="songsContainer" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      <div class="spinner-container text-center" id="loadingSpinner">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase & Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const songsContainer = document.getElementById('songsContainer');
+
+    const renderSongs = (songs) => {
+      songsContainer.innerHTML = '';
+      if (songs.length === 0) {
+        songsContainer.innerHTML = '<p class="text-center text-muted">No songs found.</p>';
+        return;
+      }
+      songs.forEach(song => {
+        const col = document.createElement('div');
+        col.className = 'col';
+
+        const card = document.createElement('div');
+        card.className = 'card song-card h-100';
+
+        const iframe = document.createElement('iframe');
+        iframe.src = song.url;
+        iframe.allow = "autoplay; encrypted-media";
+        iframe.allowFullscreen = true;
+
+        const cardBody = document.createElement('div');
+        cardBody.className = 'card-body';
+        cardBody.innerHTML = `<h5 class="card-title">${song.title || "Untitled Song"}</h5>`;
+
+        card.appendChild(iframe);
+        card.appendChild(cardBody);
+        col.appendChild(card);
+        songsContainer.appendChild(col);
+      });
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const snapshot = await getDocs(collection(db, 'songs'));
+        const songData = snapshot.docs.map(doc => doc.data());
+        document.getElementById('loadingSpinner').remove();
+        renderSongs(songData);
+      } catch (e) {
+        console.error(e);
+        songsContainer.innerHTML = '<p class="text-center text-danger">Failed to load songs.</p>';
+      }
+    });
+  </script>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
