@@ -103,7 +103,25 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
+      authDomain: "spoton-cit481.firebaseapp.com",
+      projectId: "spoton-cit481",
+      storageBucket: "spoton-cit481.appspot.com",
+      messagingSenderId: "753873898041",
+      appId: "1:753873898041:web:bde5e8f86aea63b175dbe8",
+      databaseURL: "https://spoton-cit481-default-rtdb.firebaseio.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
     document.getElementById("registerForm").addEventListener("submit", function (e) {
       e.preventDefault();
 
@@ -122,69 +140,25 @@
         return;
       }
 
-      // Placeholder - plug this into Firebase later
-      console.log("Registering user:", {
-        name: name,
-        email: email,
-        password: password
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
-    authDomain: "spoton-cit481.firebaseapp.com",
-    projectId: "spoton-cit481",
-    storageBucket: "spoton-cit481.appspot.com",
-    messagingSenderId: "753873898041",
-    appId: "1:753873898041:web:bde5e8f86aea63b175dbe8",
-    databaseURL: "https://spoton-cit481-default-rtdb.firebaseio.com"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getDatabase(app);
-
-  document.getElementById("registerForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-
-    const name = document.getElementById("fullName").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-    const confirmPassword = document.getElementById("confirmPassword").value;
-
-    if (!name || !email || !password || !confirmPassword) {
-      alert("All fields are required.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      alert("Passwords do not match!");
-      return;
-    }
-
-    createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        const user = userCredential.user;
-        const userRef = ref(db, "users/" + user.uid);
-        return set(userRef, {
-          name: name,
-          email: email
+      createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          const user = userCredential.user;
+          const userRef = ref(db, "users/" + user.uid);
+          return set(userRef, {
+            name: name,
+            email: email
+          }).then(() => {
+            return sendEmailVerification(user).then(() => {
+              alert("A verification email has been sent. Please check your inbox.");
+              window.location.href = "userlogin.html";
+            });
+          });
+        })
+        .catch((error) => {
+          alert("ERROR:" + error.message);
         });
-      })
-      .then(() => {
-        alert("Account created and stored successfully!");
-        window.location.href = "userlogin.html";
-      })
-      .catch(error => {
-        alert("ERROR:" + error.message);
-      });
-  });
-</script>
+    });
+  </script>
 
 </body>
 </html>
