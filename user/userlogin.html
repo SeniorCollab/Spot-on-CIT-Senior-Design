@@ -57,7 +57,7 @@
     signInWithEmailAndPassword(auth, email, password)
       .then(() => {
         alert("✅ Login successful!");
-        window.location.href = "../index.html"; // Or wherever you want to redirect
+        window.location.href = "../user/index.html";
       })
       .catch(error => {
         document.getElementById('errorMsg').innerText = error.message;
