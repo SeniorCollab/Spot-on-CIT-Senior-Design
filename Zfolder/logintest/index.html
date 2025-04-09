@@ -35,6 +35,17 @@
       right: 20px;
       z-index: 20;
     }
+    .custom-toggle-btn {
+      background: transparent;
+      border: none;
+      padding: 0.5rem;
+      z-index: 20;
+    }
+    
+    .custom-toggle-btn:focus {
+      box-shadow: none;
+      outline: none;
+    }
   </style>
 </head>
 <body>
@@ -44,7 +55,7 @@
 
   <div id="earth_div"></div>
 
-  <button class="btn btn-primary" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+  <button class="custom-toggle-btn" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
     <span class="navbar-toggler-icon"></span>
   </button>
 
