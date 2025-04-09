@@ -48,16 +48,70 @@
     <span class="navbar-toggler-icon"></span>
   </button>
 
-  <!-- Offcanvas Navigation omitted for brevity (unchanged) -->
+  <!-- Offcanvas Sidebar for Navigation -->
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Spot On</h5>
+      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+      <nav class="navbar mb-4">
+        <ul class="navbar-nav">
+          <li class="nav-item"><a class="nav-link active" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="pins.html">Pins</a></li>
+          <li class="nav-item"><a class="nav-link" href="songs.html">Songs</a></li>
+          <li class="nav-item"><a class="nav-link" href="events.html">Events</a></li>
+          <li class="nav-item"><a class="nav-link" href="shop.html">My Store</a></li>
+        </ul>
+      </nav>
 
-  <!-- Bootstrap JS Bundle -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+      <!-- Add Pin Form -->
+      <h6>Add a New Pin</h6>
+      <form id="pinForm">
+        <div class="mb-3">
+          <label for="latitude" class="form-label">Latitude</label>
+          <input type="number" step="any" class="form-control" id="latitude" required>
+        </div>
+        <div class="mb-3">
+          <label for="longitude" class="form-label">Longitude</label>
+          <input type="number" step="any" class="form-control" id="longitude" required>
+        </div>
+        <div class="mb-3">
+          <label for="description" class="form-label">Description</label>
+          <input type="text" class="form-control" id="description" required>
+        </div>
+        <button type="submit" class="btn btn-success">Add Pin</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Pin Modal -->
+  <div class="modal fade" id="pinModal" tabindex="-1" aria-labelledby="pinModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="pinModalLabel">Add Pin</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+          <p>Select Pin Type:</p>
+          <button type="button" class="btn btn-outline-primary mb-2" id="modalBtnSimple">Pin Event</button>
+          <button type="button" class="btn btn-outline-secondary mb-2" id="modalBtnDetailed">Pin Mood</button>
+          <button type="button" class="btn btn-outline-success mb-2" id="modalBtnShop">Pin Shop Item</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Libraries -->
   <script src="https://www.webglearth.com/v2/api.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 
+  <!-- Firebase SDK + Admin Check -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+    import { getDatabase, ref, get, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
@@ -73,33 +127,95 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
+    let currentUser = null;
+
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        alert("You are not logged in. Redirecting to admin login...");
+        alert("You are not logged in. Redirecting...");
         window.location.href = "../admin/adminlogin.html";
         return;
       }
 
       const adminRef = ref(db, "admin/" + user.uid);
       const snapshot = await get(adminRef);
-
       if (!snapshot.exists()) {
         alert("Access denied. You are not an admin.");
         window.location.href = "../index.html";
         return;
       }
 
-      console.log("Admin verified:", user.email);
-      // You can now safely run admin-only logic here
+      currentUser = user;
+      loadPinsFromFirebase();
     });
 
-    // Initialize globe
+    // WebGL Earth
     const earth = new WE.map('earth_div');
     earth.setView([0, 0], 2);
     WE.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
       subdomains: 'abc'
     }).addTo(earth);
+
+    // Add pin to map
+    function addPin(lat, lng, title, description, song) {
+      let popupContent = `<strong>${title}</strong><br>${description}`;
+      if (song) popupContent += `<br><a href="${song}" target="_blank">Song</a>`;
+      const marker = WE.marker([lat, lng]).addTo(earth);
+      marker.bindPopup(popupContent);
+    }
+
+    // Load all pins
+    function loadPinsFromFirebase() {
+      onValue(ref(db, "pins"), snapshot => {
+        const data = snapshot.val();
+        if (data) {
+          Object.values(data).forEach(pin => {
+            addPin(
+              pin.geolocation.lat,
+              pin.geolocation.lng,
+              pin.title,
+              pin.description,
+              pin.songLink || ""
+            );
+          });
+        }
+      });
+    }
+
+    // Save new pin
+    function saveToFirebase(lat, lng, title, description, song) {
+      if (!currentUser) return;
+      const newRef = push(ref(db, "pins"));
+      set(newRef, {
+        title,
+        description,
+        songLink: song,
+        geolocation: { lat, lng },
+        userId: currentUser.uid,
+        timestamp: Date.now()
+      }).then(() => {
+        addPin(lat, lng, title, description, song);
+      });
+    }
+
+    // Basic manual pin form
+    document.getElementById("pinForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const lat = parseFloat(document.getElementById("latitude").value);
+      const lng = parseFloat(document.getElementById("longitude").value);
+      const description = document.getElementById("description").value;
+      saveToFirebase(lat, lng, "Untitled", description, "");
+      e.target.reset();
+    });
+
+    // Show modal on globe click
+    earth.on("click", (event) => {
+      if (event.latlng) {
+        document.getElementById("latitude").value = event.latlng.lat;
+        document.getElementById("longitude").value = event.latlng.lng;
+        new bootstrap.Modal(document.getElementById("pinModal")).show();
+      }
+    });
   </script>
 </body>
 </html>
