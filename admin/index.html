@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8">
   <title>Interactive Map with Editable Pins</title>
-  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     html, body {
@@ -42,10 +41,13 @@
   <video autoplay muted loop id="bgvideo">
     <source src="stars.mp4" type="video/mp4">
   </video>
+
   <div id="earth_div"></div>
+
   <button class="btn btn-primary" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
     <span class="navbar-toggler-icon"></span>
   </button>
+
   <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
     <div class="offcanvas-header">
       <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Spot On</h5>
@@ -58,9 +60,10 @@
           <li class="nav-item"><a class="nav-link" href="pins.html">Pins</a></li>
           <li class="nav-item"><a class="nav-link" href="songs.html">Songs</a></li>
           <li class="nav-item"><a class="nav-link" href="events.html">Events</a></li>
-          <li class="nav-item"><a class="nav-link" href="shop.html">Store</a></li>
+          <li class="nav-item"><a class="nav-link" href="shop.html">My Store</a></li>
         </ul>
       </nav>
+
       <div class="mb-4">
         <h6>Search Pins</h6>
         <form id="searchForm">
@@ -71,6 +74,7 @@
         </form>
         <div id="searchResults" class="mt-3"></div>
       </div>
+
       <h6>Add a New Pin</h6>
       <form id="pinForm">
         <div class="mb-3">
@@ -90,14 +94,118 @@
     </div>
   </div>
 
+  <div class="modal fade" id="pinModal" tabindex="-1" aria-labelledby="pinModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="pinModalLabel">Add Pin</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Choice Form -->
+          <div id="modalChoice" class="text-center">
+            <p>Select Pin Type:</p>
+            <button type="button" class="btn btn-outline-primary mb-2" id="modalBtnSimple">Pin Event</button>
+            <button type="button" class="btn btn-outline-secondary mb-2" id="modalBtnDetailed">Pin Mood</button>
+            <button type="button" class="btn btn-outline-success mb-2" id="modalBtnShop">Pin Shop Item</button>
+          </div>
+          <!-- Simple Modal Form -->
+          <form id="simpleModalForm" class="d-none">
+            <div class="mb-3">
+              <label for="modalTitleSimple" class="form-label">Title</label>
+              <input type="text" class="form-control" id="modalTitleSimple" required>
+            </div>
+            <div class="mb-3">
+              <label for="modalDescSimple" class="form-label">Description</label>
+              <input type="text" class="form-control" id="modalDescSimple" required>
+            </div>
+            <div class="mb-3">
+              <label for="modalImageSimple" class="form-label">Image Upload</label>
+              <input type="file" class="form-control" id="modalImageSimple" accept="image/*">
+            </div>
+            <div class="mb-3">
+              <label for="modalLatSimple" class="form-label">Latitude</label>
+              <input type="number" step="any" class="form-control" id="modalLatSimple" readonly>
+            </div>
+            <div class="mb-3">
+              <label for="modalLngSimple" class="form-label">Longitude</label>
+              <input type="number" step="any" class="form-control" id="modalLngSimple" readonly>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Quick Pin</button>
+            <button type="button" class="btn btn-link mt-2" id="backFromSimpleModal">← Back</button>
+          </form>
+          <!-- Detailed Modal Form -->
+          <form id="detailedModalForm" class="d-none">
+            <div class="mb-3">
+              <label for="modalTitleDet" class="form-label">Title</label>
+              <input type="text" class="form-control" id="modalTitleDet" required>
+            </div>
+            <div class="mb-3">
+              <label for="modalDescDet" class="form-label">Description</label>
+              <textarea class="form-control" id="modalDescDet" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="modalSongDet" class="form-label">Song Link (Optional)</label>
+              <input type="url" class="form-control" id="modalSongDet">
+            </div>
+            <div class="mb-3">
+              <label for="modalLatDet" class="form-label">Latitude</label>
+              <input type="number" step="any" class="form-control" id="modalLatDet" readonly>
+            </div>
+            <div class="mb-3">
+              <label for="modalLngDet" class="form-label">Longitude</label>
+              <input type="number" step="any" class="form-control" id="modalLngDet" readonly>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Detailed Pin</button>
+            <button type="button" class="btn btn-link mt-2" id="backFromDetailedModal">← Back</button>
+          </form>
+          <!-- Shop Modal Form -->
+          <form id="shopModalForm" class="d-none">
+            <div class="mb-3">
+              <label for="modalTitleShop" class="form-label">Title</label>
+              <input type="text" class="form-control" id="modalTitleShop" required>
+            </div>
+            <div class="mb-3">
+              <label for="modalDescShop" class="form-label">Description</label>
+              <textarea class="form-control" id="modalDescShop" rows="2" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="modalImageShop" class="form-label">Image Upload</label>
+              <input type="file" class="form-control" id="modalImageShop" accept="image/*" required>
+            </div>
+            <div class="mb-3">
+              <label for="modalNumberShop" class="form-label">Quantity</label>
+              <input type="number" class="form-control" id="modalNumberShop" required>
+            </div>
+            <div class="mb-3">
+              <label for="modalLinkShop" class="form-label">Link</label>
+              <input type="url" class="form-control" id="modalLinkShop" required>
+            </div>
+            <div class="mb-3">
+              <label for="modalLatShop" class="form-label">Latitude</label>
+              <input type="number" step="any" class="form-control" id="modalLatShop" readonly>
+            </div>
+            <div class="mb-3">
+              <label for="modalLngShop" class="form-label">Longitude</label>
+              <input type="number" step="any" class="form-control" id="modalLngShop" readonly>
+            </div>
+            <button type="submit" class="btn btn-success">Save Shop Item</button>
+            <button type="button" class="btn btn-link mt-2" id="backFromShopModal">← Back</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://www.webglearth.com/v2/api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+    import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
+      apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXnCXFSlOsFmX_3k",
       authDomain: "spoton-cit481.firebaseapp.com",
       databaseURL: "https://spoton-cit481-default-rtdb.firebaseio.com",
       projectId: "spoton-cit481",
@@ -108,39 +216,147 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const auth = getAuth(app);
 
-    var earth = new WE.map('earth_div');
+    let currentUser = null;
+    signInAnonymously(auth).catch(err => alert("Auth error: " + err.message));
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        currentUser = user;
+        loadPinsFromFirebase();
+      }
+    });
+
+    const earth = new WE.map('earth_div');
     earth.setView([0, 0], 2);
     WE.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
       subdomains: 'abc'
     }).addTo(earth);
 
-    function addPin(lat, lng, description) {
+    function addPin(lat, lng, title, description, song) {
+      let popupContent = `<strong>${title}</strong><br>${description}`;
+      if (song) popupContent += `<br><a href="${song}" target="_blank">Song</a>`;
       const marker = WE.marker([lat, lng]).addTo(earth);
-      marker.bindPopup("<strong>Pin</strong><br>" + description);
+      marker.bindPopup(popupContent);
     }
 
-    function savePin(lat, lng, description) {
-      const newPinRef = push(ref(db, 'pins'));
-      set(newPinRef, {
-        title: "Untitled",
-        description: description,
-        songLink: "",
-        geolocation: { lat, lng },
-        userId: "admin",
-        timestamp: Date.now()
+    function loadPinsFromFirebase() {
+      onValue(ref(db, "pins"), snapshot => {
+        const data = snapshot.val();
+        if (data) Object.values(data).forEach(pin => {
+          addPin(pin.geolocation.lat, pin.geolocation.lng, pin.title, pin.description, pin.songLink||"");
+        });
       });
     }
 
-    document.getElementById('pinForm').addEventListener('submit', function(e) {
+    function saveToFirebase(lat, lng, title, description, song) {
+      if (!currentUser) return;
+      const newRef = push(ref(db, "pins"));
+      set(newRef, { title, description, songLink: song, geolocation: { lat, lng }, userId: currentUser.uid, timestamp: Date.now() })
+        .then(() => addPin(lat, lng, title, description, song));
+    }
+
+    // Offcanvas form
+    document.getElementById('pinForm').addEventListener('submit', e => {
       e.preventDefault();
       const lat = parseFloat(document.getElementById('latitude').value);
       const lng = parseFloat(document.getElementById('longitude').value);
-      const description = document.getElementById('description').value;
-      addPin(lat, lng, description);
-      savePin(lat, lng, description);
+      const desc = document.getElementById('description').value;
+      saveToFirebase(lat, lng, 'Untitled', desc, '');
       e.target.reset();
+    });
+
+    // Modal logic
+    const modal = new bootstrap.Modal(document.getElementById('pinModal'));
+    const modalChoice = document.getElementById('modalChoice');
+    const simpleForm = document.getElementById('simpleModalForm');
+    const detailedForm = document.getElementById('detailedModalForm');
+    const shopForm = document.getElementById('shopModalForm');
+
+    document.getElementById('modalBtnSimple').addEventListener('click', () => {
+      modalChoice.classList.add('d-none'); simpleForm.classList.remove('d-none');
+    });
+    document.getElementById('modalBtnDetailed').addEventListener('click', () => {
+      modalChoice.classList.add('d-none'); detailedForm.classList.remove('d-none');
+    });
+    document.getElementById('modalBtnShop').addEventListener('click', () => {
+      modalChoice.classList.add('d-none'); shopForm.classList.remove('d-none');
+    });
+    document.getElementById('backFromSimpleModal').addEventListener('click', () => {
+      simpleForm.classList.add('d-none'); modalChoice.classList.remove('d-none');
+    });
+    document.getElementById('backFromDetailedModal').addEventListener('click', () => {
+      detailedForm.classList.add('d-none'); modalChoice.classList.remove('d-none');
+    });
+    document.getElementById('backFromShopModal').addEventListener('click', () => {
+      shopForm.classList.add('d-none'); modalChoice.classList.remove('d-none');
+    });
+
+    simpleForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const lat = parseFloat(document.getElementById('modalLatSimple').value);
+      const lng = parseFloat(document.getElementById('modalLngSimple').value);
+      const title = document.getElementById('modalTitleSimple').value;
+      const desc = document.getElementById('modalDescSimple').value;
+      const imageFile = document.getElementById('modalImageSimple').files[0];
+      // TODO: handle imageFile upload
+      saveToFirebase(lat, lng, title, desc, '');
+      modal.hide();
+    });
+
+    detailedForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const lat = parseFloat(document.getElementById('modalLatDet').value);
+      const lng = parseFloat(document.getElementById('modalLngDet').value);
+      const title = document.getElementById('modalTitleDet').value;
+      const desc = document.getElementById('modalDescDet').value;
+      const song = document.getElementById('modalSongDet').value;
+      saveToFirebase(lat, lng, title, desc, song);
+      modal.hide();
+    });
+
+    shopForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const title = document.getElementById('modalTitleShop').value;
+      const desc = document.getElementById('modalDescShop').value;
+      const file = document.getElementById('modalImageShop').files[0];
+      const quantity = document.getElementById('modalNumberShop').value;
+      const link = document.getElementById('modalLinkShop').value;
+      const lat = parseFloat(document.getElementById('modalLatShop').value);
+      const lng = parseFloat(document.getElementById('modalLngShop').value);
+      console.log('Shop item:', title, desc, file, quantity, link, lat, lng);
+      alert(`Shop item saved: ${title}, ${desc}, ${quantity} units at (${lat}, ${lng}), link: ${link}`);
+      modal.hide();
+    });
+
+    earth.on('click', event => {
+      if (event.latlng) {
+        document.getElementById('modalLatSimple').value = event.latlng.lat;
+        document.getElementById('modalLngSimple').value = event.latlng.lng;
+        document.getElementById('modalLatDet').value = event.latlng.lat;
+        document.getElementById('modalLngDet').value = event.latlng.lng;
+        document.getElementById('modalLatShop').value = event.latlng.lat;
+        document.getElementById('modalLngShop').value = event.latlng.lng;
+        // reset forms
+        simpleForm.classList.add('d-none');
+        detailedForm.classList.add('d-none');
+        shopForm.classList.add('d-none');
+        modalChoice.classList.remove('d-none');
+        // clear inputs
+        document.getElementById('modalTitleSimple').value = '';
+        document.getElementById('modalDescSimple').value = '';
+        document.getElementById('modalImageSimple').value = null;
+        document.getElementById('modalTitleDet').value = '';
+        document.getElementById('modalDescDet').value = '';
+        document.getElementById('modalSongDet').value = '';
+        document.getElementById('modalTitleShop').value = '';
+        document.getElementById('modalDescShop').value = '';
+        document.getElementById('modalImageShop').value = null;
+        document.getElementById('modalNumberShop').value = '';
+        document.getElementById('modalLinkShop').value = '';
+        modal.show();
+      }
     });
   </script>
 </body>
