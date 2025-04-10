@@ -4,27 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Pins - Spot On</title>
-
-  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
   <style>
     body {
       padding-top: 60px;
       background-color: #f8f9fa;
-      color: #343a40;
-    }
-    #offcanvasToggle {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 1050;
-      border: none;
-      background-color: #007bff;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
-    #offcanvasToggle:hover {
-      background-color: #0056b3;
     }
     .page-header {
       background: linear-gradient(135deg, #6f42c1, #007bff);
@@ -33,7 +17,6 @@
       border-radius: 0.5rem;
       margin-bottom: 2rem;
       text-align: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     .list-group-item {
       background-color: #fff;
@@ -41,11 +24,6 @@
       margin-bottom: 1rem;
       border-radius: 0.5rem;
       box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .list-group-item:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     .pin-title {
       font-weight: 600;
@@ -54,57 +32,26 @@
     .pin-actions .btn {
       min-width: 70px;
     }
-    .custom-toggle-btn {
-      background: transparent;
-      border: none;
-      padding: 0.5rem;
-      z-index: 20;
-    }
-    .custom-toggle-btn:focus {
-      box-shadow: none;
-      outline: none;
-    }
   </style>
 </head>
 <body>
 
-  <!-- Offcanvas Toggle Button -->
-  <button class="custom-toggle-btn" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-
-  <!-- Offcanvas Sidebar -->
-  <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar">
-    <div class="offcanvas-header">
-      <h5 class="offcanvas-title">Spot On</h5>
-      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"></button>
-    </div>
-    <div class="offcanvas-body">
-      <nav class="navbar">
-        <ul class="navbar-nav">
-          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-          <li class="nav-item"><a class="nav-link active" href="pins.html">Pins</a></li>
-          <li class="nav-item"><a class="nav-link" href="songs.html">Songs</a></li>
-          <li class="nav-item"><a class="nav-link" href="events.html">Events</a></li>
-          <li class="nav-item"><a class="nav-link" href="shop.html">Store</a></li>
-          <li class="nav-item"><a class="nav-link" href="user/userlogin.html">User</a></li>
-          <li class="nav-item"><a class="nav-link" href="register.html">Sign Up</a></li>
-        </ul>
-      </nav>
-      <p class="mt-3">Create an account or login to start your journey.</p>
-    </div>
-  </div>
-
-  <!-- Header + List -->
   <div class="container">
     <div class="page-header">
-      <h1 class="display-5">Your Event Pins</h1>
-      <p class="lead">Browse and manage your saved map pins below.</p>
+      <h1 class="display-5">Your Pins</h1>
+      <p class="lead">All pins you've saved across event, mood, and shop categories.</p>
     </div>
-    <ul class="list-group" id="pinList"></ul>
+
+    <h4 class="mb-3">🗓️ Event Pins</h4>
+    <ul class="list-group mb-5" id="eventList"></ul>
+
+    <h4 class="mb-3">🎵 Mood Pins</h4>
+    <ul class="list-group mb-5" id="moodList"></ul>
+
+    <h4 class="mb-3">🛍️ Shop Pins</h4>
+    <ul class="list-group mb-5" id="shopList"></ul>
   </div>
 
-  <!-- Firebase Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
@@ -123,67 +70,92 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
-    const pinList = document.getElementById("pinList");
+
+    const eventList = document.getElementById("eventList");
+    const moodList = document.getElementById("moodList");
+    const shopList = document.getElementById("shopList");
+
+    const createListItem = (pin, id, type, userId) => {
+      const li = document.createElement("li");
+      li.className = "list-group-item d-flex justify-content-between align-items-start flex-wrap";
+
+      const content = document.createElement("div");
+      content.innerHTML = `
+        <div class="pin-title">${pin.title || "Untitled"}</div>
+        <div class="text-muted">${pin.description || ""}</div>
+        ${pin.songLink ? `<div><a href="${pin.songLink}" target="_blank">🎵 Song Link</a></div>` : ""}
+        ${pin.link ? `<div><a href="${pin.link}" target="_blank">🔗 Shop Link</a></div>` : ""}
+        ${pin.quantity ? `<div class="text-muted">Qty: ${pin.quantity}</div>` : ""}
+      `;
+
+      const actions = document.createElement("div");
+      actions.className = "pin-actions d-flex gap-2 mt-2";
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "btn btn-sm btn-outline-danger";
+      delBtn.textContent = "Delete";
+      delBtn.onclick = () => {
+        if (confirm("Delete this pin?")) {
+          remove(ref(db, `pins/${userId}/${type}/${id}`));
+        }
+      };
+
+      actions.appendChild(delBtn);
+      li.appendChild(content);
+      li.appendChild(actions);
+      return li;
+    };
 
     onAuthStateChanged(auth, user => {
-      if (!user) {
-        window.location.href = "user/userlogin.html";
-        return;
-      }
+      if (!user) return window.location.href = "user/userlogin.html";
 
-      const eventRef = ref(db, `pins/${user.uid}/eventPins`);
-      onValue(eventRef, snapshot => {
-        pinList.innerHTML = '';
+      const uid = user.uid;
+
+      // Load eventPins
+      onValue(ref(db, `pins/${uid}/eventPins`), snapshot => {
+        eventList.innerHTML = '';
         const data = snapshot.val();
-
         if (!data) {
-          const emptyItem = document.createElement('li');
-          emptyItem.className = 'list-group-item text-muted text-center';
-          emptyItem.textContent = 'No pins created yet.';
-          pinList.appendChild(emptyItem);
+          eventList.innerHTML = "<li class='list-group-item text-muted'>No event pins found.</li>";
           return;
         }
-
         Object.entries(data).forEach(([id, pin]) => {
-          const li = document.createElement('li');
-          li.className = 'list-group-item d-flex justify-content-between align-items-center flex-wrap';
+          eventList.appendChild(createListItem(pin, id, "eventPins", uid));
+        });
+      });
 
-          const title = document.createElement('span');
-          title.className = 'pin-title';
-          title.textContent = pin.title || 'Untitled Pin';
-          li.appendChild(title);
+      // Load moodPins
+      onValue(ref(db, `pins/${uid}/moodPins`), snapshot => {
+        moodList.innerHTML = '';
+        const data = snapshot.val();
+        if (!data) {
+          moodList.innerHTML = "<li class='list-group-item text-muted'>No mood pins found.</li>";
+          return;
+        }
+        Object.entries(data).forEach(([id, pin]) => {
+          moodList.appendChild(createListItem(pin, id, "moodPins", uid));
+        });
+      });
 
-          const actions = document.createElement('div');
-          actions.className = 'pin-actions d-flex gap-2 mt-2';
-
-          const viewBtn = document.createElement('a');
-          viewBtn.href = `https://www.google.com/maps?q=${pin.geolocation.lat},${pin.geolocation.lng}`;
-          viewBtn.className = 'btn btn-sm btn-outline-primary';
-          viewBtn.textContent = 'View';
-          viewBtn.target = '_blank';
-
-          const deleteBtn = document.createElement('button');
-          deleteBtn.className = 'btn btn-sm btn-outline-danger';
-          deleteBtn.textContent = 'Delete';
-          deleteBtn.addEventListener('click', () => {
-            if (confirm("Delete this pin?")) {
-              remove(ref(db, `pins/${user.uid}/eventPins/${id}`));
-            }
-          });
-
-          actions.appendChild(viewBtn);
-          actions.appendChild(deleteBtn);
-          li.appendChild(actions);
-          pinList.appendChild(li);
+      // Load shopPins
+      onValue(ref(db, `pins/${uid}/shopPins`), snapshot => {
+        shopList.innerHTML = '';
+        const data = snapshot.val();
+        if (!data) {
+          shopList.innerHTML = "<li class='list-group-item text-muted'>No shop pins found.</li>";
+          return;
+        }
+        Object.entries(data).forEach(([id, pin]) => {
+          shopList.appendChild(createListItem(pin, id, "shopPins", uid));
         });
       });
     });
   </script>
 
-  <!-- Bootstrap Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
 
 
 
