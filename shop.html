@@ -204,7 +204,7 @@
         const lat = parseFloat(document.getElementById("latitude").value);
         const lng = parseFloat(document.getElementById("longitude").value);
 
-        const newRef = push(ref(db, `pins/${user.uid}/shopPins`));
+        const newRef = push(ref(db, `pins/${currentUser.uid}/shopPins`));
         set(newRef, {
           title,
           description: desc,
@@ -219,7 +219,7 @@
       });
 
       // Load Pins
-      const userShopRef = ref(db, `pins/${user.uid}/shopPins`);
+      const userShopRef = ref(db, `pins/${currentUser.uid}/shopPins`);
       onValue(userShopRef, snapshot => {
         shopList.innerHTML = '';
         const data = snapshot.val();
