@@ -1,16 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Store - Spot On</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shop - Spot On</title>
 
-  <!-- Google Fonts -->
+  <!-- Google Fonts & Bootstrap -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <!-- Custom Styles -->
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -31,55 +29,44 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      transition: background-color 0.3s;
-    }
-    #offcanvasToggle:hover {
-      background-color: #0056b3;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
 
-    .page-header {
-      background: linear-gradient(135deg, #007bff, #00c6ff);
-      color: white;
-      padding: 2rem;
-      border-radius: 0.5rem;
-      text-align: center;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-    }
-
-    .store-item {
-      background: #fff;
-      border-radius: 1rem;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+    .shop-card {
+      background-color: #fff;
       padding: 1.5rem;
-      text-align: center;
-      transition: transform 0.3s ease;
+      border-radius: 1rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      margin-bottom: 1.5rem;
     }
-    .store-item:hover {
-      transform: translateY(-5px);
-    }
-    .store-title {
+
+    .shop-title {
       font-weight: 600;
-      font-size: 1.2rem;
-      margin-bottom: 0.5rem;
+      font-size: 1.3rem;
+      color: #333;
     }
-    .store-desc {
-      color: #6c757d;
-      font-size: 0.95rem;
-      margin-bottom: 1rem;
+
+    .shop-description {
+      color: #555;
     }
-    .store-price {
-      font-size: 1rem;
-      font-weight: 500;
-      color: #28a745;
+
+    .shop-image {
+      max-width: 100%;
+      border-radius: 0.5rem;
+      margin-top: 1rem;
     }
+
+    .shop-actions {
+      margin-top: 1rem;
+    }
+
     .custom-toggle-btn {
       background: transparent;
       border: none;
       padding: 0.5rem;
       z-index: 20;
     }
-    
+
     .custom-toggle-btn:focus {
       box-shadow: none;
       outline: none;
@@ -87,16 +74,17 @@
   </style>
 </head>
 <body>
-  <!-- Offcanvas Toggle Button -->
-  <button class="custom-toggle-btn" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+
+  <!-- Offcanvas Toggle -->
+  <button class="custom-toggle-btn" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
     <span class="navbar-toggler-icon"></span>
   </button>
 
   <!-- Offcanvas Navigation -->
-  <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar">
     <div class="offcanvas-header">
-      <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Spot On</h5>
-      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      <h5 class="offcanvas-title">Spot On</h5>
+      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body">
       <nav class="navbar">
@@ -105,82 +93,103 @@
           <li class="nav-item"><a class="nav-link" href="pins.html">Pins</a></li>
           <li class="nav-item"><a class="nav-link" href="songs.html">Songs</a></li>
           <li class="nav-item"><a class="nav-link" href="events.html">Events</a></li>
-          <li class="nav-item"><a class="nav-link active" href="store.html">Store</a></li>
+          <li class="nav-item"><a class="nav-link active" href="shop.html">Store</a></li>
           <li class="nav-item"><a class="nav-link" href="user/userlogin.html">User</a></li>
           <li class="nav-item"><a class="nav-link" href="admin/adminlogin.html">Admin</a></li>
           <li class="nav-item"><a class="nav-link" href="register.html">Sign Up</a></li>
         </ul>
       </nav>
+      <p class="mt-3">View and manage items you’ve pinned to the map store.</p>
     </div>
   </div>
 
-  <main class="container">
-    <div class="page-header">
-      <h1 class="display-5">Digital Store</h1>
-      <p class="lead">Browse all available items added by users.</p>
-    </div>
+  <!-- Shop Section -->
+  <div class="container mt-5">
+    <h2 class="mb-4">Your Shop Pins</h2>
+    <div id="shopList"></div>
+  </div>
 
-    <div id="storeItems" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"></div>
-  </main>
-
-  <!-- Firebase Script -->
+  <!-- Firebase SDKs -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
+      authDomain: "spoton-cit481.firebaseapp.com",
+      databaseURL: "https://spoton-cit481-default-rtdb.firebaseio.com",
+      projectId: "spoton-cit481",
+      storageBucket: "spoton-cit481.appspot.com",
+      messagingSenderId: "753873898041",
+      appId: "1:753873898041:web:bde5e8f86aea63b175dbe8"
     };
+
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+    const shopList = document.getElementById("shopList");
 
-    const storeItemsDiv = document.getElementById('storeItems');
+    function createShopCard(itemId, item, userId) {
+      const card = document.createElement("div");
+      card.className = "shop-card";
 
-    const displayItems = (items) => {
-      storeItemsDiv.innerHTML = '';
-      items.forEach(item => {
-        const col = document.createElement('div');
-        col.className = 'col';
+      const imageHTML = item.imageUrl
+        ? `<img src="${item.imageUrl}" class="shop-image" alt="Item image">`
+        : "";
 
-        const card = document.createElement('div');
-        card.className = 'store-item';
+      card.innerHTML = `
+        <div class="shop-title">${item.title || "Untitled Item"}</div>
+        <div class="shop-description mt-2">${item.description || "No description"}</div>
+        <div class="text-muted mt-1">Quantity: ${item.quantity || 0}</div>
+        ${imageHTML}
+        <div class="shop-actions">
+          <a href="${item.link}" class="btn btn-sm btn-outline-success mt-2" target="_blank">View Product</a>
+          <button class="btn btn-sm btn-outline-primary mt-2 ms-2" data-edit="${itemId}">Edit</button>
+          <button class="btn btn-sm btn-outline-danger mt-2 ms-2" data-delete="${itemId}">Delete</button>
+        </div>
+      `;
 
-        const title = document.createElement('h5');
-        title.className = 'store-title';
-        title.textContent = item.name;
-
-        const desc = document.createElement('p');
-        desc.className = 'store-desc';
-        desc.textContent = item.description || 'No description.';
-
-        const price = document.createElement('p');
-        price.className = 'store-price';
-        price.textContent = `$${item.price}`;
-
-        card.append(title, desc, price);
-        col.appendChild(card);
-        storeItemsDiv.appendChild(col);
+      // Delete
+      card.querySelector(`[data-delete="${itemId}"]`).addEventListener("click", () => {
+        if (confirm("Delete this shop item?")) {
+          remove(ref(db, `pins/${userId}/shopPins/${itemId}`));
+        }
       });
-    };
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      try {
-        const snapshot = await getDocs(collection(db, 'storeItems'));
-        const storeItems = snapshot.docs.map(doc => doc.data());
-        displayItems(storeItems);
-      } catch (error) {
-        console.error('Error loading store items:', error);
-        storeItemsDiv.innerHTML = '<p class="text-center text-danger">Failed to load store items.</p>';
+      // Edit placeholder
+      card.querySelector(`[data-edit="${itemId}"]`).addEventListener("click", () => {
+        console.log("Edit clicked:", itemId, item);
+        alert("Edit functionality coming soon.");
+      });
+
+      return card;
+    }
+
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.href = "user/userlogin.html";
+        return;
       }
+
+      const userShopRef = ref(db, `pins/${user.uid}/shopPins`);
+      onValue(userShopRef, snapshot => {
+        shopList.innerHTML = '';
+        const data = snapshot.val();
+
+        if (!data) {
+          shopList.innerHTML = "<p class='text-muted'>You have no shop pins yet.</p>";
+          return;
+        }
+
+        Object.entries(data).forEach(([itemId, item]) => {
+          const card = createShopCard(itemId, item, user.uid);
+          shopList.appendChild(card);
+        });
+      });
     });
   </script>
 
-  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
