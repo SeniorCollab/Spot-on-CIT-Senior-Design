@@ -87,25 +87,73 @@
     </div>
   </div>
 
-  <!-- Load WebGL Earth API -->
+   <!-- WebGL Earth + Bootstrap -->
   <script src="https://www.webglearth.com/v2/api.js"></script>
-  <!-- Bootstrap JS Bundle (includes Popper) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    // Create the globe in the 'earth_div' element
-    var earth = new WE.map('earth_div');
-    // Set initial view with [latitude, longitude] and a zoom level
-    earth.setView([0, 0], 2);
 
-    // Add a tile layer using OpenStreetMap tiles
+  <!-- Firebase SDK & Pin Loader -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
+      authDomain: "spoton-cit481.firebaseapp.com",
+      databaseURL: "https://spoton-cit481-default-rtdb.firebaseio.com",
+      projectId: "spoton-cit481",
+      storageBucket: "spoton-cit481.appspot.com",
+      messagingSenderId: "753873898041",
+      appId: "1:753873898041:web:bde5e8f86aea63b175dbe8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Create globe
+    const earth = new WE.map('earth_div');
+    earth.setView([0, 0], 2);
     WE.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
       subdomains: 'abc'
     }).addTo(earth);
 
-    // Optionally, add a marker to test interactivity
-    var marker = WE.marker([0, 0]).addTo(earth);
-    marker.bindPopup("Hello, World!").openPopup();
+    function addPin(lat, lng, title, description, songLink = "") {
+      const marker = WE.marker([lat, lng]).addTo(earth);
+      let content = `<strong>${title}</strong><br>${description}`;
+      if (songLink) content += `<br><a href="${songLink}" target="_blank">Song</a>`;
+      marker.bindPopup(content);
+    }
+
+    function loadPinsFromFirebase() {
+      const pinsRef = ref(db, "pins");
+
+      onValue(pinsRef, snapshot => {
+        const allUserPins = snapshot.val();
+        if (!allUserPins) return;
+
+        Object.values(allUserPins).forEach(userPins => {
+          ["eventPins", "moodPins", "shopPins"].forEach(type => {
+            const pinGroup = userPins[type];
+            if (pinGroup) {
+              Object.values(pinGroup).forEach(pin => {
+                const { title, description, songLink, geolocation } = pin;
+                if (geolocation) {
+                  addPin(
+                    geolocation.lat,
+                    geolocation.lng,
+                    title || "Untitled",
+                    description || "",
+                    songLink || ""
+                  );
+                }
+              });
+            }
+          });
+        });
+      });
+    }
+
+    loadPinsFromFirebase();
   </script>
 </body>
 </html>
