@@ -35,16 +35,6 @@
       right: 20px;
       z-index: 20;
     }
-    .custom-toggle-btn {
-      background: transparent;
-      border: none;
-      padding: 0.5rem;
-      z-index: 20;
-    }
-    .custom-toggle-btn:focus {
-      box-shadow: none;
-      outline: none;
-    }
   </style>
 </head>
 <body>
@@ -83,11 +73,10 @@
   <script src="https://www.webglearth.com/v2/api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-    import { getDatabase, ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
@@ -105,7 +94,6 @@
 
     let currentUser = null;
 
-    // Create globe
     const earth = new WE.map('earth_div');
     earth.setView([0, 0], 2);
     WE.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -120,18 +108,6 @@
       marker.bindPopup(content);
     }
 
-    function saveEventPin(lat, lng, title, description) {
-      if (!currentUser) return;
-
-      const newRef = push(ref(db, `pins/${currentUser.uid}/eventPins`));
-      set(newRef, {
-        title,
-        description,
-        geolocation: { lat, lng },
-        timestamp: Date.now()
-      });
-    }
-
     function loadPinsFromFirebase() {
       const pinsRef = ref(db, "pins");
       onValue(pinsRef, snapshot => {
@@ -139,48 +115,61 @@
         if (!allUserPins) return;
 
         Object.values(allUserPins).forEach(userPins => {
-          ["eventPins", "moodPins", "shopPins"].forEach(type => {
-            const pinGroup = userPins[type];
-            if (pinGroup) {
-              Object.values(pinGroup).forEach(pin => {
-                const { title, description, songLink, geolocation } = pin;
-                if (geolocation) {
-                  addPin(
-                    geolocation.lat,
-                    geolocation.lng,
-                    title || "Untitled",
-                    description || "",
-                    songLink || ""
-                  );
-                }
-              });
-            }
-          });
+          const eventPins = userPins.eventPins;
+          if (eventPins) {
+            Object.values(eventPins).forEach(pin => {
+              if (pin.geolocation) {
+                addPin(
+                  pin.geolocation.lat,
+                  pin.geolocation.lng,
+                  pin.title || "Untitled",
+                  pin.description || "",
+                  pin.songLink || ""
+                );
+              }
+            });
+          }
         });
       });
     }
 
     onAuthStateChanged(auth, user => {
-      if (user) {
-        currentUser = user;
-        loadPinsFromFirebase();
+      if (!user) {
+        console.warn("⛔ Not logged in");
+        return;
+      }
+      currentUser = user;
+      console.log("✅ Authenticated as:", currentUser.uid);
+      loadPinsFromFirebase();
+    });
 
-        // Enable globe click for logged-in users
-        earth.on('click', event => {
-          if (event.latlng) {
-            const lat = event.latlng.lat;
-            const lng = event.latlng.lng;
-            const title = prompt("Enter pin title:");
-            const description = prompt("Enter description:");
-            if (title && description) {
-              saveEventPin(lat, lng, title, description);
-              addPin(lat, lng, title, description);
-            }
-          }
+    earth.on("click", function (event) {
+      if (!currentUser) {
+        alert("Please log in to add pins.");
+        return;
+      }
+
+      const lat = event.latlng.lat;
+      const lng = event.latlng.lng;
+
+      const title = prompt("Enter a pin title:");
+      const description = prompt("Enter a description:");
+      const songLink = prompt("Enter a song link (optional):");
+
+      if (title && description) {
+        const newRef = push(ref(db, `pins/${currentUser.uid}/eventPins`));
+        set(newRef, {
+          title,
+          description,
+          songLink,
+          geolocation: { lat, lng },
+          timestamp: Date.now()
+        }).then(() => {
+          alert("✅ Pin saved!");
+          addPin(lat, lng, title, description, songLink);
+        }).catch(err => {
+          console.error("❌ Failed to save pin:", err.message);
         });
-      } else {
-        console.warn("Not logged in. Pins will be read-only.");
-        loadPinsFromFirebase();
       }
     });
   </script>
