@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8">
   <title>Interactive Map with Editable Pins</title>
-  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     html, body {
@@ -22,7 +21,6 @@
       z-index: -2;
       object-fit: cover;
     }
-    /* Globe fills the background */
     #earth_div {
       position: fixed;
       top: 0;
@@ -31,7 +29,6 @@
       height: 100%;
       z-index: 0;
     }
-    /* Offcanvas toggle button styling */
     #offcanvasToggle {
       position: fixed;
       top: 20px;
@@ -44,7 +41,6 @@
       padding: 0.5rem;
       z-index: 20;
     }
-    
     .custom-toggle-btn:focus {
       box-shadow: none;
       outline: none;
@@ -52,19 +48,16 @@
   </style>
 </head>
 <body>
-  <!-- Video Background (local file) -->
   <video autoplay muted loop id="bgvideo">
     <source src="stars.mp4" type="video/mp4">
   </video>
-  <!-- Globe Background -->
+
   <div id="earth_div"></div>
 
-  <!-- Offcanvas Toggle Button (Hamburger Icon) -->
   <button class="btn btn-primary" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
     <span class="navbar-toggler-icon"></span>
   </button>
 
-  <!-- Offcanvas Sidebar for Navigation -->
   <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
     <div class="offcanvas-header">
       <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Spot On</h5>
@@ -87,14 +80,14 @@
     </div>
   </div>
 
-   <!-- WebGL Earth + Bootstrap -->
   <script src="https://www.webglearth.com/v2/api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Firebase SDK & Pin Loader -->
+  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+    import { getDatabase, ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
@@ -108,6 +101,9 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    let currentUser = null;
 
     // Create globe
     const earth = new WE.map('earth_div');
@@ -124,9 +120,20 @@
       marker.bindPopup(content);
     }
 
+    function saveEventPin(lat, lng, title, description) {
+      if (!currentUser) return;
+
+      const newRef = push(ref(db, `pins/${currentUser.uid}/eventPins`));
+      set(newRef, {
+        title,
+        description,
+        geolocation: { lat, lng },
+        timestamp: Date.now()
+      });
+    }
+
     function loadPinsFromFirebase() {
       const pinsRef = ref(db, "pins");
-
       onValue(pinsRef, snapshot => {
         const allUserPins = snapshot.val();
         if (!allUserPins) return;
@@ -153,7 +160,30 @@
       });
     }
 
-    loadPinsFromFirebase();
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        currentUser = user;
+        loadPinsFromFirebase();
+
+        // Enable globe click for logged-in users
+        earth.on('click', event => {
+          if (event.latlng) {
+            const lat = event.latlng.lat;
+            const lng = event.latlng.lng;
+            const title = prompt("Enter pin title:");
+            const description = prompt("Enter description:");
+            if (title && description) {
+              saveEventPin(lat, lng, title, description);
+              addPin(lat, lng, title, description);
+            }
+          }
+        });
+      } else {
+        console.warn("Not logged in. Pins will be read-only.");
+        loadPinsFromFirebase();
+      }
+    });
   </script>
 </body>
 </html>
+
