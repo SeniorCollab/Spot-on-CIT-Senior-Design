@@ -219,13 +219,15 @@
     const auth = getAuth(app);
 
     let currentUser = null;
-    signInAnonymously(auth).catch(err => alert("Auth error: " + err.message));
     onAuthStateChanged(auth, user => {
       if (user) {
-        currentUser = user;
-        loadPinsFromFirebase();
+      currentUser = user;
+      loadPinsFromFirebase();
+      } else {
+      window.location.href = "../user/userlogin.html"; // Redirect if not logged in
       }
     });
+
 
     const earth = new WE.map('earth_div');
     earth.setView([0, 0], 2);
@@ -241,31 +243,79 @@
       marker.bindPopup(popupContent);
     }
 
-    function loadPinsFromFirebase() {
-      onValue(ref(db, "pins"), snapshot => {
-        const data = snapshot.val();
-        if (data) Object.values(data).forEach(pin => {
-          addPin(pin.geolocation.lat, pin.geolocation.lng, pin.title, pin.description, pin.songLink||"");
-        });
+function loadPinsFromFirebase() {
+  const pinsRef = ref(db, "pins");
+
+  onValue(pinsRef, snapshot => {
+    const allUserPins = snapshot.val();
+    if (!allUserPins) return;
+
+    Object.values(allUserPins).forEach(userPins => {
+      ["eventPins", "moodPins", "shopPins"].forEach(type => {
+        const pinGroup = userPins[type];
+        if (pinGroup) {
+          Object.values(pinGroup).forEach(pin => {
+            const { title, description, songLink, geolocation } = pin;
+            if (geolocation) {
+              addPin(
+                geolocation.lat,
+                geolocation.lng,
+                title || "Untitled",
+                description || "",
+                songLink || ""
+              );
+            }
+          });
+        }
       });
-    }
-
-    function saveToFirebase(lat, lng, title, description, song) {
-      if (!currentUser) return;
-      const newRef = push(ref(db, "pins"));
-      set(newRef, { title, description, songLink: song, geolocation: { lat, lng }, userId: currentUser.uid, timestamp: Date.now() })
-        .then(() => addPin(lat, lng, title, description, song));
-    }
-
-    // Offcanvas form
-    document.getElementById('pinForm').addEventListener('submit', e => {
-      e.preventDefault();
-      const lat = parseFloat(document.getElementById('latitude').value);
-      const lng = parseFloat(document.getElementById('longitude').value);
-      const desc = document.getElementById('description').value;
-      saveToFirebase(lat, lng, 'Untitled', desc, '');
-      e.target.reset();
     });
+  });
+}
+
+function saveEventPin(lat, lng, title, description, imageUrl = "") {
+  const newRef = push(ref(db, `pins/${currentUser.uid}/eventPins`));
+  set(newRef, {
+    title,
+    description,
+    imageUrl,
+    geolocation: { lat, lng },
+    timestamp: Date.now()
+  });
+}
+
+function saveMoodPin(lat, lng, title, description, songLink = "") {
+  const newRef = push(ref(db, `pins/${currentUser.uid}/moodPins`));
+  set(newRef, {
+    title,
+    description,
+    songLink,
+    geolocation: { lat, lng },
+    timestamp: Date.now()
+  });
+}
+
+function saveShopPin(lat, lng, title, description, imageUrl = "", quantity, link) {
+  const newRef = push(ref(db, `pins/${currentUser.uid}/shopPins`));
+  set(newRef, {
+    title,
+    description,
+    imageUrl,
+    quantity,
+    link,
+    geolocation: { lat, lng },
+    timestamp: Date.now()
+  });
+}
+
+      // Offcanvas form
+    document.getElementById('pinForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const lat = parseFloat(document.getElementById('latitude').value);
+    const lng = parseFloat(document.getElementById('longitude').value);
+    const desc = document.getElementById('description').value;
+    saveEventPin(lat, lng, 'Untitled', desc);
+    e.target.reset();
+  });
 
     // Modal logic
     const modal = new bootstrap.Modal(document.getElementById('pinModal'));
@@ -301,7 +351,7 @@
       const desc = document.getElementById('modalDescSimple').value;
       const imageFile = document.getElementById('modalImageSimple').files[0];
       // TODO: handle imageFile upload
-      saveToFirebase(lat, lng, title, desc, '');
+      saveEventPin(lat, lng, title, desc);
       modal.hide();
     });
 
@@ -312,7 +362,7 @@
       const title = document.getElementById('modalTitleDet').value;
       const desc = document.getElementById('modalDescDet').value;
       const song = document.getElementById('modalSongDet').value;
-      saveToFirebase(lat, lng, title, desc, song);
+      saveMoodPin(lat, lng, title, desc, song);
       modal.hide();
     });
 
