@@ -27,7 +27,6 @@
     }
     .pin-title {
       font-weight: 600;
-      font-size: 1.1rem;
     }
     .pin-actions .btn {
       min-width: 70px;
@@ -36,123 +35,109 @@
 </head>
 <body>
 
-  <div class="container">
-    <div class="page-header">
-      <h1 class="display-5">Your Pins</h1>
-      <p class="lead">All pins you've saved across event, mood, and shop categories.</p>
-    </div>
-
-    <h4 class="mb-3">🗓️ Event Pins</h4>
-    <ul class="list-group mb-5" id="eventList"></ul>
-
-    <h4 class="mb-3">🎵 Mood Pins</h4>
-    <ul class="list-group mb-5" id="moodList"></ul>
-
-    <h4 class="mb-3">🛍️ Shop Pins</h4>
-    <ul class="list-group mb-5" id="shopList"></ul>
+<div class="container">
+  <div class="page-header">
+    <h1 class="display-5">Your Pins</h1>
+    <p class="lead">View your event, mood, and shop pins</p>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+  <h4>🗓️ Event Pins</h4>
+  <ul class="list-group mb-4" id="eventPins"></ul>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
-      authDomain: "spoton-cit481.firebaseapp.com",
-      databaseURL: "https://spoton-cit481-default-rtdb.firebaseio.com",
-      projectId: "spoton-cit481",
-      storageBucket: "spoton-cit481.appspot.com",
-      messagingSenderId: "753873898041",
-      appId: "1:753873898041:web:bde5e8f86aea63b175dbe8"
-    };
+  <h4>🎵 Mood Pins</h4>
+  <ul class="list-group mb-4" id="moodPins"></ul>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const auth = getAuth(app);
+  <h4>🛍️ Shop Pins</h4>
+  <ul class="list-group mb-4" id="shopPins"></ul>
+</div>
 
-    const eventList = document.getElementById("eventList");
-    const moodList = document.getElementById("moodList");
-    const shopList = document.getElementById("shopList");
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
-    const createListItem = (pin, id, type, userId) => {
-      const li = document.createElement("li");
-      li.className = "list-group-item d-flex justify-content-between align-items-start flex-wrap";
+const firebaseConfig = {
+  apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
+  authDomain: "spoton-cit481.firebaseapp.com",
+  databaseURL: "https://spoton-cit481-default-rtdb.firebaseio.com",
+  projectId: "spoton-cit481",
+  storageBucket: "spoton-cit481.appspot.com",
+  messagingSenderId: "753873898041",
+  appId: "1:753873898041:web:bde5e8f86aea63b175dbe8"
+};
 
-      const content = document.createElement("div");
-      content.innerHTML = `
-        <div class="pin-title">${pin.title || "Untitled"}</div>
-        <div class="text-muted">${pin.description || ""}</div>
-        ${pin.songLink ? `<div><a href="${pin.songLink}" target="_blank">🎵 Song Link</a></div>` : ""}
-        ${pin.link ? `<div><a href="${pin.link}" target="_blank">🔗 Shop Link</a></div>` : ""}
-        ${pin.quantity ? `<div class="text-muted">Qty: ${pin.quantity}</div>` : ""}
-      `;
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
 
-      const actions = document.createElement("div");
-      actions.className = "pin-actions d-flex gap-2 mt-2";
+const eventList = document.getElementById("eventPins");
+const moodList = document.getElementById("moodPins");
+const shopList = document.getElementById("shopPins");
 
-      const delBtn = document.createElement("button");
-      delBtn.className = "btn btn-sm btn-outline-danger";
-      delBtn.textContent = "Delete";
-      delBtn.onclick = () => {
-        if (confirm("Delete this pin?")) {
-          remove(ref(db, `pins/${userId}/${type}/${id}`));
-        }
-      };
+function renderPin(pin, pinId, type, uid) {
+  const li = document.createElement("li");
+  li.className = "list-group-item d-flex justify-content-between align-items-start flex-wrap";
 
-      actions.appendChild(delBtn);
-      li.appendChild(content);
-      li.appendChild(actions);
-      return li;
-    };
+  const details = document.createElement("div");
+  details.innerHTML = `
+    <div class="pin-title">${pin.title || "Untitled"}</div>
+    <div class="text-muted">${pin.description || ""}</div>
+    ${pin.songLink ? `<a href="${pin.songLink}" target="_blank">🎵 Song Link</a><br>` : ""}
+    ${pin.link ? `<a href="${pin.link}" target="_blank">🛒 Product</a><br>` : ""}
+    ${pin.quantity ? `<div>Qty: ${pin.quantity}</div>` : ""}
+  `;
 
-    onAuthStateChanged(auth, user => {
-      if (!user) return window.location.href = "user/userlogin.html";
+  const actions = document.createElement("div");
+  actions.className = "pin-actions d-flex gap-2 mt-2";
 
-      const uid = user.uid;
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "btn btn-sm btn-outline-danger";
+  deleteBtn.textContent = "Delete";
+  deleteBtn.onclick = () => {
+    if (confirm("Delete this pin?")) {
+      remove(ref(db, `pins/${uid}/${type}/${pinId}`));
+    }
+  };
 
-      // Load eventPins
-      onValue(ref(db, `pins/${uid}/eventPins`), snapshot => {
-        eventList.innerHTML = '';
-        const data = snapshot.val();
-        if (!data) {
-          eventList.innerHTML = "<li class='list-group-item text-muted'>No event pins found.</li>";
-          return;
-        }
-        Object.entries(data).forEach(([id, pin]) => {
-          eventList.appendChild(createListItem(pin, id, "eventPins", uid));
-        });
-      });
+  actions.appendChild(deleteBtn);
+  li.appendChild(details);
+  li.appendChild(actions);
+  return li;
+}
 
-      // Load moodPins
-      onValue(ref(db, `pins/${uid}/moodPins`), snapshot => {
-        moodList.innerHTML = '';
-        const data = snapshot.val();
-        if (!data) {
-          moodList.innerHTML = "<li class='list-group-item text-muted'>No mood pins found.</li>";
-          return;
-        }
-        Object.entries(data).forEach(([id, pin]) => {
-          moodList.appendChild(createListItem(pin, id, "moodPins", uid));
-        });
-      });
+onAuthStateChanged(auth, user => {
+  if (!user) {
+    alert("You must be logged in to view your pins.");
+    window.location.href = "user/userlogin.html";
+    return;
+  }
 
-      // Load shopPins
-      onValue(ref(db, `pins/${uid}/shopPins`), snapshot => {
-        shopList.innerHTML = '';
-        const data = snapshot.val();
-        if (!data) {
-          shopList.innerHTML = "<li class='list-group-item text-muted'>No shop pins found.</li>";
-          return;
-        }
-        Object.entries(data).forEach(([id, pin]) => {
-          shopList.appendChild(createListItem(pin, id, "shopPins", uid));
-        });
+  const uid = user.uid;
+
+  const loadSection = (type, container) => {
+    const pinsRef = ref(db, `pins/${uid}/${type}`);
+    onValue(pinsRef, snapshot => {
+      container.innerHTML = "";
+      const pins = snapshot.val();
+      if (!pins) {
+        container.innerHTML = `<li class="list-group-item text-muted">No ${type} found.</li>`;
+        return;
+      }
+
+      Object.entries(pins).forEach(([pinId, pin]) => {
+        container.appendChild(renderPin(pin, pinId, type, uid));
       });
     });
-  </script>
+  };
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+  loadSection("eventPins", eventList);
+  loadSection("moodPins", moodList);
+  loadSection("shopPins", shopList);
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
 
