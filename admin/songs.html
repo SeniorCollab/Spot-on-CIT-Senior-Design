@@ -55,11 +55,22 @@
       height: 250px;
       border: none;
     }
+    .custom-toggle-btn {
+      background: transparent;
+      border: none;
+      padding: 0.5rem;
+      z-index: 20;
+    }
+    
+    .custom-toggle-btn:focus {
+      box-shadow: none;
+      outline: none;
+    }
   </style>
 </head>
 <body>
   <!-- Offcanvas Toggle -->
-  <button class="btn" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+  <button class="custom-toggle-btn" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
     <span class="navbar-toggler-icon"></span>
   </button>
 
