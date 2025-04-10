@@ -50,17 +50,17 @@
       color: #555;
     }
 
-    .event-date {
-      font-size: 0.9rem;
-      color: #888;
+    .event-actions {
+      margin-top: 1rem;
     }
+
     .custom-toggle-btn {
       background: transparent;
       border: none;
       padding: 0.5rem;
       z-index: 20;
     }
-    
+
     .custom-toggle-btn:focus {
       box-shadow: none;
       outline: none;
@@ -70,7 +70,7 @@
 <body>
 
   <!-- Offcanvas Toggle -->
-  <button class="custom-toggle-btn" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+  <button class="custom-toggle-btn" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
     <span class="navbar-toggler-icon"></span>
   </button>
 
@@ -87,7 +87,7 @@
           <li class="nav-item"><a class="nav-link" href="pins.html">Pins</a></li>
           <li class="nav-item"><a class="nav-link" href="songs.html">Songs</a></li>
           <li class="nav-item"><a class="nav-link active" href="events.html">Events</a></li>
-          <li class="nav-item"><a class="nav-link" href="shop.html">Store</a></li>
+          <li class="nav-item"><a class="nav-link" href="shop.html">My Store</a></li>
           <li class="nav-item"><a class="nav-link" href="user/userlogin.html">User</a></li>
           <li class="nav-item"><a class="nav-link" href="admin/adminlogin.html">Admin</a></li>
           <li class="nav-item"><a class="nav-link" href="register.html">Sign Up</a></li>
@@ -99,54 +99,88 @@
 
   <!-- Events Section -->
   <div class="container mt-5">
-    <h2 class="mb-4">Upcoming Events</h2>
+    <h2 class="mb-4">Your Saved Events</h2>
     <div id="eventList"></div>
   </div>
 
-  <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Firebase SDKs (Add config below when ready) -->
+  <!-- Firebase + Auth -->
   <script type="module">
-    // Import Firebase (You can also use <script src=...> method)
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      databaseURL: "YOUR_DATABASE_URL",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
+      authDomain: "spoton-cit481.firebaseapp.com",
+      databaseURL: "https://spoton-cit481-default-rtdb.firebaseio.com",
+      projectId: "spoton-cit481",
+      storageBucket: "spoton-cit481.appspot.com",
+      messagingSenderId: "753873898041",
+      appId: "1:753873898041:web:bde5e8f86aea63b175dbe8"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-
+    const auth = getAuth(app);
     const eventList = document.getElementById("eventList");
 
-    const eventsRef = ref(db, 'events/');
-    onValue(eventsRef, (snapshot) => {
-      eventList.innerHTML = '';
-      const data = snapshot.val();
-      if (!data) {
-        eventList.innerHTML = "<p class='text-muted'>No events available.</p>";
+    function createEventCard(eventId, event, userId) {
+      const card = document.createElement("div");
+      card.className = "event-card";
+
+      card.innerHTML = `
+        <div class="event-title">${event.title || "Untitled Event"}</div>
+        <div class="event-description mt-2">${event.description || "No description"}</div>
+        <div class="event-date text-muted mt-1">
+          ${event.geolocation ? `Location: ${event.geolocation.lat}, ${event.geolocation.lng}` : ""}
+        </div>
+        <div class="event-actions">
+          <button class="btn btn-sm btn-outline-primary me-2" data-edit="${eventId}">Edit</button>
+          <button class="btn btn-sm btn-outline-danger" data-delete="${eventId}">Delete</button>
+        </div>
+      `;
+
+      // Delete functionality
+      card.querySelector(`[data-delete="${eventId}"]`).addEventListener("click", () => {
+        if (confirm("Delete this event?")) {
+          remove(ref(db, `pins/${userId}/eventPins/${eventId}`));
+        }
+      });
+
+      // Placeholder edit
+      card.querySelector(`[data-edit="${eventId}"]`).addEventListener("click", () => {
+        console.log("Edit clicked:", eventId, event);
+        alert("Edit functionality coming soon!");
+      });
+
+      return card;
+    }
+
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.href = "user/userlogin.html";
         return;
       }
 
-      Object.values(data).forEach(event => {
-        const card = document.createElement('div');
-        card.className = 'event-card';
-        card.innerHTML = `
-          <div class="event-title">${event.title || 'Untitled Event'}</div>
-          <div class="event-description mt-2">${event.description || 'No description provided.'}</div>
-          <div class="event-date mt-2">${event.date || 'Date not set'}</div>
-        `;
-        eventList.appendChild(card);
+      const userEventsRef = ref(db, `pins/${user.uid}/eventPins`);
+      onValue(userEventsRef, snapshot => {
+        eventList.innerHTML = '';
+        const data = snapshot.val();
+
+        if (!data) {
+          eventList.innerHTML = "<p class='text-muted'>You have no event pins yet.</p>";
+          return;
+        }
+
+        Object.entries(data).forEach(([eventId, event]) => {
+          const card = createEventCard(eventId, event, user.uid);
+          eventList.appendChild(card);
+        });
       });
     });
   </script>
 
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
