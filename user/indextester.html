@@ -186,6 +186,20 @@
             marker.bindPopup(html);
           });
         });
+        const btnId = `del-btn-${type}-${pinId}`;
+        let html = `
+          <strong>${pin.title}</strong><br>
+          ${pin.description}
+          ${pin.songLink ? `<br><a href="${pin.songLink}" target="_blank">Song</a>` : ""}
+          <br><button id="${btnId}" class="btn btn-sm btn-danger mt-2">Delete</button>
+        `;
+        marker.bindPopup(html);
+
+        marker.on("popupopen", () => {
+          document
+            .getElementById(btnId)
+            .addEventListener("click", () => deletePin(type, pinId));
+        });
       });
     }
 
