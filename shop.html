@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Shop - Spot On</title>
@@ -9,6 +8,9 @@
   <!-- Google Fonts & Bootstrap -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Cloudinary Widget -->
+  <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 
   <style>
     body {
@@ -107,13 +109,48 @@
   <!-- Shop Section -->
   <div class="container mt-5">
     <h2 class="mb-4">Your Shop Pins</h2>
+
+    <!-- Upload Form -->
+    <form id="shopForm" class="mb-4">
+      <div class="mb-3">
+        <label for="title" class="form-label">Item Title</label>
+        <input type="text" class="form-control" id="title" required>
+      </div>
+      <div class="mb-3">
+        <label for="desc" class="form-label">Description</label>
+        <textarea class="form-control" id="desc" rows="2" required></textarea>
+      </div>
+      <div class="mb-3">
+        <label for="quantity" class="form-label">Quantity</label>
+        <input type="number" class="form-control" id="quantity" required>
+      </div>
+      <div class="mb-3">
+        <label for="link" class="form-label">Product Link</label>
+        <input type="url" class="form-control" id="link" required>
+      </div>
+      <div class="mb-3">
+        <label for="latitude" class="form-label">Latitude</label>
+        <input type="number" step="any" class="form-control" id="latitude" required>
+      </div>
+      <div class="mb-3">
+        <label for="longitude" class="form-label">Longitude</label>
+        <input type="number" step="any" class="form-control" id="longitude" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Upload Image</label><br>
+        <button type="button" class="btn btn-outline-secondary" id="uploadWidgetBtn">Upload with Cloudinary</button>
+        <p id="imageStatus" class="text-muted mt-2">No image uploaded.</p>
+      </div>
+      <button type="submit" class="btn btn-success">Save Shop Pin</button>
+    </form>
+
     <div id="shopList"></div>
   </div>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+    import { getDatabase, ref, onValue, push, set, remove } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -131,60 +168,91 @@
     const auth = getAuth(app);
     const shopList = document.getElementById("shopList");
 
-    function createShopCard(itemId, item, userId) {
-      const card = document.createElement("div");
-      card.className = "shop-card";
+    let currentUser = null;
+    let uploadedImageUrl = "";
 
-      const imageHTML = item.imageUrl
-        ? `<img src="${item.imageUrl}" class="shop-image" alt="Item image">`
-        : "";
-
-      card.innerHTML = `
-        <div class="shop-title">${item.title || "Untitled Item"}</div>
-        <div class="shop-description mt-2">${item.description || "No description"}</div>
-        <div class="text-muted mt-1">Quantity: ${item.quantity || 0}</div>
-        ${imageHTML}
-        <div class="shop-actions">
-          <a href="${item.link}" class="btn btn-sm btn-outline-success mt-2" target="_blank">View Product</a>
-          <button class="btn btn-sm btn-outline-primary mt-2 ms-2" data-edit="${itemId}">Edit</button>
-          <button class="btn btn-sm btn-outline-danger mt-2 ms-2" data-delete="${itemId}">Delete</button>
-        </div>
-      `;
-
-      // Delete
-      card.querySelector(`[data-delete="${itemId}"]`).addEventListener("click", () => {
-        if (confirm("Delete this shop item?")) {
-          remove(ref(db, `pins/${userId}/shopPins/${itemId}`));
+    // Cloudinary Upload
+    document.getElementById("uploadWidgetBtn").addEventListener("click", () => {
+      const myWidget = cloudinary.createUploadWidget({
+        cloudName: 'djhoct1eh', // replace this
+        uploadPreset: 'ml_default'
+      }, (error, result) => {
+        if (!error && result && result.event === "success") {
+          uploadedImageUrl = result.info.secure_url;
+          document.getElementById("imageStatus").innerText = "✅ Image uploaded.";
         }
       });
+      myWidget.open();
+    });
 
-      // Edit placeholder
-      card.querySelector(`[data-edit="${itemId}"]`).addEventListener("click", () => {
-        console.log("Edit clicked:", itemId, item);
-        alert("Edit functionality coming soon.");
-      });
-
-      return card;
-    }
-
+    // Auth + Load
     onAuthStateChanged(auth, user => {
       if (!user) {
         window.location.href = "user/userlogin.html";
         return;
       }
+      currentUser = user;
 
+      // Save Form
+      document.getElementById("shopForm").addEventListener("submit", e => {
+        e.preventDefault();
+
+        const title = document.getElementById("title").value;
+        const desc = document.getElementById("desc").value;
+        const quantity = document.getElementById("quantity").value;
+        const link = document.getElementById("link").value;
+        const lat = parseFloat(document.getElementById("latitude").value);
+        const lng = parseFloat(document.getElementById("longitude").value);
+
+        const newRef = push(ref(db, `pins/${user.uid}/shopPins`));
+        set(newRef, {
+          title,
+          description: desc,
+          imageUrl: uploadedImageUrl,
+          quantity,
+          link,
+          geolocation: { lat, lng },
+          timestamp: Date.now()
+        }).then(() => {
+          alert("✅ Shop pin saved!");
+        });
+      });
+
+      // Load Pins
       const userShopRef = ref(db, `pins/${user.uid}/shopPins`);
       onValue(userShopRef, snapshot => {
         shopList.innerHTML = '';
         const data = snapshot.val();
-
         if (!data) {
           shopList.innerHTML = "<p class='text-muted'>You have no shop pins yet.</p>";
           return;
         }
 
-        Object.entries(data).forEach(([itemId, item]) => {
-          const card = createShopCard(itemId, item, user.uid);
+        Object.entries(data).forEach(([id, item]) => {
+          const card = document.createElement("div");
+          card.className = "shop-card";
+          card.innerHTML = `
+            <div class="shop-title">${item.title || "Untitled Item"}</div>
+            <div class="shop-description mt-2">${item.description || ""}</div>
+            <div class="text-muted mt-1">Quantity: ${item.quantity || 0}</div>
+            ${item.imageUrl ? `<img src="${item.imageUrl}" class="shop-image mt-2">` : ""}
+            <div class="shop-actions mt-3">
+              <a href="${item.link}" target="_blank" class="btn btn-sm btn-outline-success">View Product</a>
+              <button class="btn btn-sm btn-outline-primary ms-2" data-edit="${id}">Edit</button>
+              <button class="btn btn-sm btn-outline-danger ms-2" data-delete="${id}">Delete</button>
+            </div>
+          `;
+
+          card.querySelector(`[data-delete="${id}"]`).addEventListener("click", () => {
+            if (confirm("Delete this item?")) {
+              remove(ref(db, `pins/${user.uid}/shopPins/${id}`));
+            }
+          });
+
+          card.querySelector(`[data-edit="${id}"]`).addEventListener("click", () => {
+            alert("Edit coming soon.");
+          });
+
           shopList.appendChild(card);
         });
       });
@@ -194,3 +262,4 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
