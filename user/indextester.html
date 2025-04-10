@@ -161,6 +161,24 @@
       attribution: "© OpenStreetMap contributors"
     }).addTo(earth);
 
+    async function deletePin(type, pinId) {
+      if (!confirm("Are you sure you want to delete this pin?")) return;
+    
+      try {
+        const pinRef = ref(db, `pins/${auth.currentUser.uid}/${type}/${pinId}`);
+        await remove(pinRef);
+    
+        const marker = markers[pinId];
+        if (marker) {
+          earth.removeLayer(marker);
+          delete markers[pinId];
+        }
+      } catch (err) {
+        console.error("Delete failed:", err);
+        alert("Could not delete pin: " + err.message);
+      }
+    }
+
     function loadPinsFromFirebase() {
       const userPinsRef = ref(db, `pins/${currentUser.uid}`);
       onValue(userPinsRef, snapshot => {
@@ -178,51 +196,20 @@
             const marker = WE.marker([lat, lng]).addTo(earth);
             markers[pinId] = marker;
 
-            let html = `<strong>${pin.title}</strong><br>${pin.description}`;
-            if (pin.songLink) html += `<br><a href=\"${pin.songLink}\" target=\"_blank\">Song</a>`;
-            html += `
-              <br><button class=\"btn btn-sm btn-danger mt-2\" onclick=\"deletePin('${type}','${pinId}')\">Delete</button>`;
+            const btnId = `delete-${type}-${pinId}`;
+            const popupHTML = `
+              <strong>${pin.title}</strong><br>
+              ${pin.description}<br>
+              ${pin.songLink ? `<a href="${pin.songLink}" target="_blank">Listen</a><br>` : ""}
+              <button id="${btnId}" class="btn btn-sm btn-danger mt-2">Delete</button>
+            `;
 
             marker.bindPopup(html);
           });
         });
-        const btnId = `del-btn-${type}-${pinId}`;
-        let html = `
-          <strong>${pin.title}</strong><br>
-          ${pin.description}
-          ${pin.songLink ? `<br><a href="${pin.songLink}" target="_blank">Song</a>` : ""}
-          <br><button id="${btnId}" class="btn btn-sm btn-danger mt-2">Delete</button>
-        `;
-        marker.bindPopup(html);
-
-        marker.on("popupopen", () => {
-          document
-            .getElementById(btnId)
-            .addEventListener("click", () => deletePin(type, pinId));
-        });
       });
     }
 
-    async function deletePin(type, pinId) {
-      // 1) confirm with the user
-      if (!confirm("Are you sure you want to delete this pin?")) return;
-    
-      try {
-        // 2) remove from Firebase
-        const pinRef = ref(db, `pins/${currentUser.uid}/${type}/${pinId}`);
-        await remove(pinRef);
-    
-        // 3) remove from map & internal lookup
-        const marker = markers[pinId];
-        if (marker) {
-          earth.removeLayer(marker);
-          delete markers[pinId];
-        }
-      } catch (err) {
-        console.error("Delete failed:", err);
-        alert("Could not delete pin: " + err.message);
-      }
-    }
 
     function saveEventPin(lat, lng, title, desc, imageUrl = "") {
       const refPath = ref(db, `pins/${currentUser.uid}/eventPins`);
