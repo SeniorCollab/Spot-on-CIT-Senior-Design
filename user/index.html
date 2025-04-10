@@ -1,4 +1,5 @@
-<!-- HEAD SECTION -->
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <title>Interactive Map with Editable Pins</title>
@@ -38,8 +39,115 @@
   </style>
 </head>
 <body>
+  <video autoplay muted loop id="bgvideo">
+    <source src="stars.mp4" type="video/mp4">
+  </video>
 
-  <!-- SCRIPT SECTION -->
+  <div id="earth_div"></div>
+
+  <!-- Hamburger Button -->
+  <button class="btn btn-primary" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <!-- Sidebar -->
+  <div class="offcanvas offcanvas-end" id="offcanvasNavbar" tabindex="-1">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title">Spot On</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+      <nav class="navbar">
+        <ul class="navbar-nav">
+          <li class="nav-item"><a class="nav-link active" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="pins.html">Pins</a></li>
+          <li class="nav-item"><a class="nav-link" href="songs.html">Songs</a></li>
+          <li class="nav-item"><a class="nav-link" href="events.html">Events</a></li>
+          <li class="nav-item"><a class="nav-link" href="shop.html">My Store</a></li>
+        </ul>
+      </nav>
+
+      <h6 class="mt-4">Search Pins</h6>
+      <form id="searchForm">
+        <input type="text" class="form-control mb-2" id="searchInput" placeholder="Search by description">
+        <button type="submit" class="btn btn-primary w-100">Search</button>
+      </form>
+
+      <h6 class="mt-4">Add a New Pin</h6>
+      <form id="pinForm">
+        <div class="mb-2">
+          <label for="latitude" class="form-label">Latitude</label>
+          <input type="number" class="form-control" id="latitude" required>
+        </div>
+        <div class="mb-2">
+          <label for="longitude" class="form-label">Longitude</label>
+          <input type="number" class="form-control" id="longitude" required>
+        </div>
+        <div class="mb-2">
+          <label for="description" class="form-label">Description</label>
+          <input type="text" class="form-control" id="description" required>
+        </div>
+        <button type="submit" class="btn btn-success w-100">Add Pin</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modals (pinModal is triggered on globe click) -->
+  <div class="modal fade" id="pinModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Add Pin</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+
+          <div id="modalChoice" class="text-center">
+            <p>Select Pin Type:</p>
+            <button class="btn btn-outline-primary mb-2" id="modalBtnSimple">Pin Event</button>
+            <button class="btn btn-outline-secondary mb-2" id="modalBtnDetailed">Pin Mood</button>
+            <button class="btn btn-outline-success mb-2" id="modalBtnShop">Pin Shop Item</button>
+          </div>
+
+          <!-- Event -->
+          <form id="simpleModalForm" class="d-none">
+            <input type="text" class="form-control mb-2" id="modalTitleSimple" placeholder="Title" required>
+            <input type="text" class="form-control mb-2" id="modalDescSimple" placeholder="Description" required>
+            <button type="button" class="btn btn-outline-secondary mb-2" id="uploadEventBtn">Upload Event Image</button>
+            <input type="hidden" id="modalImageSimple">
+            <input type="number" class="form-control mb-2" id="modalLatSimple" readonly>
+            <input type="number" class="form-control mb-2" id="modalLngSimple" readonly>
+            <button type="submit" class="btn btn-primary w-100">Save Event Pin</button>
+            <button type="button" class="btn btn-link mt-2" id="backFromSimpleModal">← Back</button>
+          </form>
+
+          <!-- Mood -->
+          <form id="detailedModalForm" class="d-none">
+            <input type="text" class="form-control mb-2" id="modalTitleDet" placeholder="Title" required>
+            <textarea class="form-control mb-2" id="modalDescDet" placeholder="Description" rows="2" required></textarea>
+            <input type="url" class="form-control mb-2" id="modalSongDet" placeholder="Song Link">
+            <input type="number" class="form-control mb-2" id="modalLatDet" readonly>
+            <input type="number" class="form-control mb-2" id="modalLngDet" readonly>
+            <button type="submit" class="btn btn-primary w-100">Save Mood Pin</button>
+            <button type="button" class="btn btn-link mt-2" id="backFromDetailedModal">← Back</button>
+          </form>
+
+          <!-- Shop -->
+          <form id="shopModalForm" class="d-none">
+            <input type="text" class="form-control mb-2" id="modalTitleShop" placeholder="Title" required>
+            <textarea class="form-control mb-2" id="modalDescShop" placeholder="Description" rows="2" required></textarea>
+            <button type="button" class="btn btn-outline-secondary mb-2" id="uploadShopBtn">Upload Shop Image</button>
+            <input type="hidden" id="modalImageShop">
+            <input type="number" class="form-control mb-2" id="modalNumberShop" placeholder="Quantity" required>
+            <input type="url" class="form-control mb-2" id="modalLinkShop" placeholder="Link" required>
+            <input type="number" class="form-control mb-2" id="modalLatShop" readonly>
+            <input type="number" class="form-control mb-2" id="modalLngShop" readonly>
+            <button type="submit" class="btn btn-success w-100">Save Shop Item</button>
+            <button type="button" class="btn btn-link mt-2" id="backFromShopModal">← Back</button>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://www.webglearth.com/v2/api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module">
@@ -64,6 +172,7 @@
     let currentUser = null;
     let eventImageUrl = "";
     let shopImageUrl = "";
+    const modal = new bootstrap.Modal(document.getElementById("pinModal"));
 
     onAuthStateChanged(auth, user => {
       if (!user) return window.location.href = "user/userlogin.html";
@@ -71,39 +180,36 @@
       loadPinsFromFirebase();
     });
 
-    const earth = new WE.map('earth_div');
+    const earth = new WE.map("earth_div");
     earth.setView([0, 0], 2);
-    WE.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      subdomains: 'abc'
+    WE.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors",
+      subdomains: "abc"
     }).addTo(earth);
 
-    function addPin(lat, lng, title, description, song) {
+    function addPin(lat, lng, title, description, songLink = "") {
       const marker = WE.marker([lat, lng]).addTo(earth);
-      let popupContent = `<strong>${title}</strong><br>${description}`;
-      if (song) popupContent += `<br><a href="${song}" target="_blank">Song</a>`;
-      marker.bindPopup(popupContent);
+      let content = `<strong>${title}</strong><br>${description}`;
+      if (songLink) content += `<br><a href="${songLink}" target="_blank">Song</a>`;
+      marker.bindPopup(content);
     }
 
     function loadPinsFromFirebase() {
-      const pinsRef = ref(db, "pins");
-      onValue(pinsRef, snapshot => {
-        const allUserPins = snapshot.val();
-        if (!allUserPins) return;
-
-        Object.values(allUserPins).forEach(userPins => {
+      onValue(ref(db, "pins"), snapshot => {
+        const allPins = snapshot.val();
+        if (!allPins) return;
+        Object.values(allPins).forEach(user => {
           ["eventPins", "moodPins", "shopPins"].forEach(type => {
-            const pinGroup = userPins[type];
-            if (pinGroup) {
-              Object.values(pinGroup).forEach(pin => {
-                const { title, description, songLink, geolocation } = pin;
-                if (geolocation) {
+            const group = user[type];
+            if (group) {
+              Object.values(group).forEach(pin => {
+                if (pin.geolocation) {
                   addPin(
-                    geolocation.lat,
-                    geolocation.lng,
-                    title || "Untitled",
-                    description || "",
-                    songLink || ""
+                    pin.geolocation.lat,
+                    pin.geolocation.lng,
+                    pin.title || "Untitled",
+                    pin.description || "",
+                    pin.songLink || ""
                   );
                 }
               });
@@ -114,30 +220,32 @@
     }
 
     function saveEventPin(lat, lng, title, desc, imageUrl = "") {
-      const newRef = push(ref(db, `pins/${currentUser.uid}/eventPins`));
-      return set(newRef, {
+      const refPath = ref(db, `pins/${currentUser.uid}/eventPins`);
+      return set(push(refPath), {
         title, description: desc, imageUrl,
-        geolocation: { lat, lng }, timestamp: Date.now()
+        geolocation: { lat, lng },
+        timestamp: Date.now()
       });
     }
 
     function saveMoodPin(lat, lng, title, desc, songLink = "") {
-      const newRef = push(ref(db, `pins/${currentUser.uid}/moodPins`));
-      return set(newRef, {
+      const refPath = ref(db, `pins/${currentUser.uid}/moodPins`);
+      return set(push(refPath), {
         title, description: desc, songLink,
-        geolocation: { lat, lng }, timestamp: Date.now()
+        geolocation: { lat, lng },
+        timestamp: Date.now()
       });
     }
 
     function saveShopPin(lat, lng, title, desc, imageUrl = "", quantity, link) {
-      const newRef = push(ref(db, `pins/${currentUser.uid}/shopPins`));
-      return set(newRef, {
+      const refPath = ref(db, `pins/${currentUser.uid}/shopPins`);
+      return set(push(refPath), {
         title, description: desc, imageUrl, quantity, link,
-        geolocation: { lat, lng }, timestamp: Date.now()
+        geolocation: { lat, lng },
+        timestamp: Date.now()
       });
     }
 
-    // 🌩️ CLOUDINARY INTEGRATION
     function openCloudinary(callback) {
       cloudinary.createUploadWidget({
         cloudName: "djhoct1eh",
@@ -149,25 +257,21 @@
       }).open();
     }
 
-    // 🔄 Replace file input with clickable Cloudinary upload
-    document.getElementById("modalImageSimple").addEventListener("click", e => {
-      e.preventDefault();
+    document.getElementById("uploadEventBtn").addEventListener("click", () => {
       openCloudinary(url => {
         eventImageUrl = url;
-        alert("Event image uploaded!");
+        alert("Event image uploaded");
       });
     });
 
-    document.getElementById("modalImageShop").addEventListener("click", e => {
-      e.preventDefault();
+    document.getElementById("uploadShopBtn").addEventListener("click", () => {
       openCloudinary(url => {
         shopImageUrl = url;
-        alert("Shop image uploaded!");
+        alert("Shop image uploaded");
       });
     });
 
-    // Submit handlers
-    simpleForm.addEventListener("submit", e => {
+    document.getElementById("simpleModalForm").addEventListener("submit", e => {
       e.preventDefault();
       const lat = parseFloat(document.getElementById("modalLatSimple").value);
       const lng = parseFloat(document.getElementById("modalLngSimple").value);
@@ -176,7 +280,17 @@
       saveEventPin(lat, lng, title, desc, eventImageUrl).then(() => modal.hide());
     });
 
-    shopForm.addEventListener("submit", e => {
+    document.getElementById("detailedModalForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const lat = parseFloat(document.getElementById("modalLatDet").value);
+      const lng = parseFloat(document.getElementById("modalLngDet").value);
+      const title = document.getElementById("modalTitleDet").value;
+      const desc = document.getElementById("modalDescDet").value;
+      const song = document.getElementById("modalSongDet").value;
+      saveMoodPin(lat, lng, title, desc, song).then(() => modal.hide());
+    });
+
+    document.getElementById("shopModalForm").addEventListener("submit", e => {
       e.preventDefault();
       const title = document.getElementById("modalTitleShop").value;
       const desc = document.getElementById("modalDescShop").value;
@@ -187,19 +301,40 @@
       saveShopPin(lat, lng, title, desc, shopImageUrl, quantity, link).then(() => modal.hide());
     });
 
-    // Globe click handler
+    // Globe click opens modal
     earth.on("click", event => {
       if (event.latlng) {
         const lat = event.latlng.lat;
         const lng = event.latlng.lng;
-        document.getElementById("modalLatSimple").value = lat;
-        document.getElementById("modalLngSimple").value = lng;
-        document.getElementById("modalLatDet").value = lat;
-        document.getElementById("modalLngDet").value = lng;
-        document.getElementById("modalLatShop").value = lat;
-        document.getElementById("modalLngShop").value = lng;
+        ["Simple", "Det", "Shop"].forEach(type => {
+          document.getElementById(`modalLat${type}`).value = lat;
+          document.getElementById(`modalLng${type}`).value = lng;
+        });
         modal.show();
       }
     });
+
+    // Back buttons
+    document.getElementById("modalBtnSimple").onclick = () => {
+      hideForms(); document.getElementById("simpleModalForm").classList.remove("d-none");
+    };
+    document.getElementById("modalBtnDetailed").onclick = () => {
+      hideForms(); document.getElementById("detailedModalForm").classList.remove("d-none");
+    };
+    document.getElementById("modalBtnShop").onclick = () => {
+      hideForms(); document.getElementById("shopModalForm").classList.remove("d-none");
+    };
+    document.getElementById("backFromSimpleModal").onclick =
+    document.getElementById("backFromDetailedModal").onclick =
+    document.getElementById("backFromShopModal").onclick = () => {
+      hideForms(); document.getElementById("modalChoice").classList.remove("d-none");
+    };
+
+    function hideForms() {
+      ["modalChoice", "simpleModalForm", "detailedModalForm", "shopModalForm"].forEach(id => {
+        document.getElementById(id).classList.add("d-none");
+      });
+    }
   </script>
 </body>
+</html>
