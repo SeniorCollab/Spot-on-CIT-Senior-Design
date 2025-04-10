@@ -135,19 +135,27 @@
     const auth = getAuth(app);
     const container = document.getElementById("songsContainer");
 
-    function convertToEmbedURL(url) {
-      if (!url) return "";
-      if (url.includes("open.spotify.com/track/")) {
-        const trackId = url.split("/track/")[1].split("?")[0];
-        return `https://open.spotify.com/embed/track/${trackId}`;
-      }
-      if (url.includes("youtube.com/watch?v=")) {
-        const videoId = url.split("v=")[1].split("&")[0];
-        return `https://www.youtube.com/embed/${videoId}`;
-      }
-      return url;
-    }
+function convertToEmbedURL(url) {
+  if (!url) return "";
 
+  if (url.includes("open.spotify.com/track/")) {
+    const trackId = url.split("/track/")[1].split("?")[0];
+    return `https://open.spotify.com/embed/track/${trackId}`;
+  }
+
+  // Handle both live and watch formats
+  if (url.includes("youtube.com/watch?v=")) {
+    const videoId = url.split("v=")[1].split("&")[0];
+    return `https://www.youtube.com/embed/${videoId}`;
+  }
+
+  if (url.includes("youtube.com/live/")) {
+    const videoId = url.split("/live/")[1].split("?")[0];
+    return `https://www.youtube.com/embed/${videoId}`;
+  }
+
+  return url;
+}
     function createSongCard(pin) {
       const col = document.createElement("div");
       col.className = "col";
