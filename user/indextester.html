@@ -162,32 +162,37 @@
      }).addTo(earth);
  
      function loadPinsFromFirebase() {
-       const userPinsRef = ref(db, `pins/${currentUser.uid}`);
-       onValue(userPinsRef, snapshot => {
-         // Clear existing markers
-         Object.values(markers).forEach(m => earth.removeLayer(m));
-         Object.keys(markers).forEach(k => delete markers[k]);
- 
-         const data = snapshot.val();
-         if (!data) return;
-         ["eventPins","moodPins","shopPins"].forEach(type => {
-           const group = data[type];
-           if (!group) return;
-           Object.entries(group).forEach(([pinId, pin]) => {
-             const { lat, lng } = pin.geolocation;
-             const marker = WE.marker([lat, lng]).addTo(earth);
-             markers[pinId] = marker;
- 
-             let html = `<strong>${pin.title}</strong><br>${pin.description}`;
-             if (pin.songLink) html += `<br><a href=\"${pin.songLink}\" target=\"_blank\">Song</a>`;
-             html += `
-               <br><button class=\"btn btn-sm btn-danger mt-2\" onclick=\"deletePin('${type}','${pinId}')\">Delete</button>`;
- 
-             marker.bindPopup(html);
-           });
-         });
-       });
-     }
+  if (!currentUser) return; // Ensure no pins load until login
+
+  const userPinsRef = ref(db, `pins/${currentUser.uid}`);
+  onValue(userPinsRef, snapshot => {
+    // Remove all old markers
+    for (const id in markers) {
+      if (markers[id]) {
+        earth.removeLayer(markers[id]);
+        delete markers[id];
+      }
+    }
+
+    const data = snapshot.val();
+    if (!data) return;
+
+    ["eventPins", "moodPins", "shopPins"].forEach(type => {
+      const group = data[type];
+      if (!group) return;
+      Object.entries(group).forEach(([pinId, pin]) => {
+        const { lat, lng } = pin.geolocation;
+        const marker = WE.marker([lat, lng]).addTo(earth);
+        markers[pinId] = marker;
+
+        let html = `<strong>${pin.title}</strong><br>${pin.description}`;
+        if (pin.songLink) html += `<br><a href="${pin.songLink}" target="_blank">Song</a>`;
+        html += `<br><button class="btn btn-sm btn-danger mt-2" onclick="deletePin('${type}','${pinId}')">Delete</button>`;
+        marker.bindPopup(html);
+      });
+    });
+  });
+}
  
      // Delete a pin both from Firebase and the map
      window.deletePin = function(type, pinId) {
