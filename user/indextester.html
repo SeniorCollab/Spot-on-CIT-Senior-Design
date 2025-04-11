@@ -161,66 +161,80 @@
       loadPinsFromFirebase();
     });
 
-    function addPin(lat, lng, title, description, songLink = "", userId = null, type = null, pinId = null) {
+    function addPin(lat, lng, title, description, songLink = "") {
       const marker = WE.marker([lat, lng]).addTo(earth);
-      // … build your popup HTML …
+      let content = `<strong>${title}</strong><br>${description}`;
+      if (songLink) content += `<br><a href="${songLink}" target="_blank">Song</a>`;
       marker.bindPopup(content);
+      return marker;
+    }
+    function attachDeleteButton(marker, userId, type, pinId) {
+      // build a unique button ID
+      const deleteBtnId = `delete-${pinId}`;
     
-      // store it so deletePin can find it:
-      if (pinId) markers[pinId] = marker;
+      // grab the existing popup HTML, append our button, and reset it
+      const original = marker.getPopup().getContent();
+      const withBtn = original + 
+        `<br><button id="${deleteBtnId}" class="btn btn-danger btn-sm mt-2">
+           Delete
+         </button>`;
+      marker.setPopupContent(withBtn);
     
-      // only wire up the delete button if it's yours
-      if (auth.currentUser?.uid === userId && type && pinId) {
-        marker.on("open", () => {
-          const btn = document.getElementById(`delete-${pinId}`);
-          if (btn) btn.onclick = () => deletePin(userId, type, pinId);
+      // wire up the click when the popup opens
+      marker.on("open", () => {
+        const btn = document.getElementById(deleteBtnId);
+        if (btn) {
+          btn.onclick = () => deletePin(userId, type, pinId, marker);
+        }
+      });
+    }
+
+    function deletePin(userId, type, pinId, marker) {
+      const pinRef = ref(db, `pins/${userId}/${type}/${pinId}`);
+      remove(pinRef)
+        .then(() => {
+          marker.removeFrom(earth);      // WebGLEarth’s removal call
+          delete markers[pinId];         // clean up your lookup map
+        })
+        .catch(err => {
+          console.error("Delete failed:", err);
+          alert("Could not delete pin. Please try again.");
         });
-      }
     }
 
     function loadPinsFromFirebase() {
       onValue(ref(db, "pins"), snapshot => {
-        const allPins = snapshot.val();
-        if (!allPins) return;
-        Object.entries(allPins).forEach(([userId, user]) => {
-          ["eventPins", "moodPins", "shopPins"].forEach(type => {
+        const all = snapshot.val();
+        if (!all) return;
+    
+        Object.entries(all).forEach(([userId, user]) => {
+          ["eventPins","moodPins","shopPins"].forEach(type => {
             const group = user[type];
-            if (group) {
-              Object.entries(group).forEach(([pinId, pin]) => {
-                if (pin.geolocation) {
-                  addPin(
-                    pin.geolocation.lat,
-                    pin.geolocation.lng,
-                    pin.title,
-                    pin.description,
-                    pin.songLink || "",
-                    userId,
-                    type,
-                    pinId
-                  );
-                }
-              });
-            }
+            if (!group) return;
+    
+            Object.entries(group).forEach(([pinId, pin]) => {
+              if (!pin.geolocation) return;
+              
+              // create the marker…
+              const m = addPin(
+                pin.geolocation.lat,
+                pin.geolocation.lng,
+                pin.title,
+                pin.description,
+                pin.songLink || ""
+              );
+    
+              // store it for later removal
+              markers[pinId] = m;
+    
+              // if it’s *your* pin, attach the Delete UI
+              if (auth.currentUser?.uid === userId) {
+                attachDeleteButton(m, userId, type, pinId);
+              }
+            });
           });
         });
       });
-    }
-
-    function deletePin(userId, type, pinId) {
-      const pinRef = ref(db, `pins/${userId}/${type}/${pinId}`);
-      remove(pinRef)
-        .then(() => {
-          const marker = markers[pinId];
-          if (marker) {
-            // the proper WebGLEarth way:
-            marker.removeFrom(earth);
-            delete markers[pinId];
-          }
-        })
-        .catch(err => {
-          console.error("Failed to delete pin:", err);
-          alert("Could not delete pin. Try again?");
-        });
     }
     
 
