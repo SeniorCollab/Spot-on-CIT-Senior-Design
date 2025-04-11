@@ -19,10 +19,12 @@
 
   <div id="earth_div"></div>
 
+  <!-- Sidebar toggle -->
   <button class="btn btn-primary" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
     <span class="navbar-toggler-icon"></span>
   </button>
 
+  <!-- Offcanvas Sidebar -->
   <div class="offcanvas offcanvas-end" id="offcanvasNavbar" tabindex="-1">
     <div class="offcanvas-header">
       <h5 class="offcanvas-title">Spot On</h5>
@@ -38,12 +40,6 @@
           <li class="nav-item"><a class="nav-link" href="shop.html">My Store</a></li>
         </ul>
       </nav>
-
-      <h6 class="mt-4">Search Pins</h6>
-      <form id="searchForm">
-        <input type="text" class="form-control mb-2" id="searchInput" placeholder="Search by description">
-        <button type="submit" class="btn btn-primary w-100">Search</button>
-      </form>
 
       <h6 class="mt-4">Add a New Pin</h6>
       <form id="pinForm">
@@ -64,29 +60,7 @@
     </div>
   </div>
 
-  <div class="modal fade" id="pinModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header"><h5 class="modal-title">Add Pin</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
-        <div class="modal-body">
-
-          <div id="modalChoice" class="text-center">
-            <p>Select Pin Type:</p>
-            <button class="btn btn-outline-primary mb-2" id="modalBtnSimple">Pin Event</button>
-            <button class="btn btn-outline-secondary mb-2" id="modalBtnDetailed">Pin Mood</button>
-            <button class="btn btn-outline-success mb-2" id="modalBtnShop">Pin Shop Item</button>
-          </div>
-
-          <!-- All three forms below are unchanged from your original file -->
-          <!-- Event Form -->
-          <!-- Mood Form -->
-          <!-- Shop Form -->
-
-        </div>
-      </div>
-    </div>
-  </div>
-
+  <!-- Globe Setup -->
   <script src="https://www.webglearth.com/v2/api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module">
@@ -107,65 +81,82 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
+
+    let currentUser = null;
     const earth = new WE.map("earth_div");
     earth.setView([0, 0], 2);
     WE.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "© OpenStreetMap contributors"
     }).addTo(earth);
 
-    let currentUser = null;
-    let markers = {};
-    let eventImageUrl = "", shopImageUrl = "";
-    const modal = new bootstrap.Modal(document.getElementById("pinModal"));
+    const markers = {};
 
     onAuthStateChanged(auth, user => {
-      if (!user) {
-        window.location.href = "user/userlogin.html";
-      } else {
-        currentUser = user;
-        loadPinsFromFirebase();
-      }
+      if (!user) return window.location.href = "user/userlogin.html";
+      currentUser = user;
+      loadPins();
     });
 
-    function loadPinsFromFirebase() {
-      const userPinsRef = ref(db, `pins/${currentUser.uid}`);
-      onValue(userPinsRef, snapshot => {
-        Object.values(markers).forEach(marker => earth.removeLayer(marker));
-        markers = {};
+    function loadPins() {
+      if (!currentUser) return;
+
+      const pinsRef = ref(db, `pins/${currentUser.uid}`);
+      onValue(pinsRef, snapshot => {
+        Object.values(markers).forEach(marker => marker.remove());
+        Object.keys(markers).forEach(k => delete markers[k]);
 
         const data = snapshot.val();
         if (!data) return;
+
         ["eventPins", "moodPins", "shopPins"].forEach(type => {
           const group = data[type];
           if (!group) return;
           Object.entries(group).forEach(([pinId, pin]) => {
-            const marker = WE.marker([pin.geolocation.lat, pin.geolocation.lng]).addTo(earth);
+            const { lat, lng } = pin.geolocation;
+            const marker = WE.marker([lat, lng]).addTo(earth);
             markers[pinId] = marker;
-            let content = `<strong>${pin.title}</strong><br>${pin.description}`;
-            if (pin.songLink) content += `<br><a href="${pin.songLink}" target="_blank">Song</a>`;
-            content += `<br><button class="btn btn-sm btn-danger mt-2" onclick="deletePin('${type}','${pinId}')">Delete</button>`;
-            marker.bindPopup(content);
+
+            let popup = `<strong>${pin.title}</strong><br>${pin.description}`;
+            if (pin.songLink) popup += `<br><a href="${pin.songLink}" target="_blank">Song</a>`;
+            popup += `<br><button class="btn btn-sm btn-danger mt-2" onclick="deletePin('${type}', '${pinId}')">Delete</button>`;
+
+            marker.bindPopup(popup);
           });
         });
       });
     }
 
+    // Delete Pin
     window.deletePin = function(type, pinId) {
-      if (!confirm("Are you sure you want to delete this pin?")) return;
       const pinRef = ref(db, `pins/${currentUser.uid}/${type}/${pinId}`);
-      remove(pinRef).then(() => {
-        if (markers[pinId]) {
-          earth.removeLayer(markers[pinId]);
-          delete markers[pinId];
-        }
-      }).catch(err => {
-        console.error("Delete error:", err);
-        alert("Could not delete pin: " + err.message);
-      });
+      remove(pinRef)
+        .then(() => {
+          if (markers[pinId]) {
+            markers[pinId].remove(); // ✅ correct method for WebGL Earth
+            delete markers[pinId];
+          }
+        })
+        .catch(err => alert("Could not delete pin: " + err.message));
     };
 
-    // Save functions and modal setup unchanged...
+    // Optional: Add basic test pin
+    document.getElementById("pinForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const lat = parseFloat(document.getElementById("latitude").value);
+      const lng = parseFloat(document.getElementById("longitude").value);
+      const description = document.getElementById("description").value;
+      const refPath = ref(db, `pins/${currentUser.uid}/eventPins`);
+      set(push(refPath), {
+        title: "Untitled",
+        description,
+        geolocation: { lat, lng },
+        timestamp: Date.now()
+      }).then(() => {
+        document.getElementById("pinForm").reset();
+      });
+    });
   </script>
 </body>
 </html>
+
 
