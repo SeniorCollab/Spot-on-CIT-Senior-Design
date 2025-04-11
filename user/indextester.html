@@ -159,6 +159,18 @@
       if (!user) return window.location.href = "user/userlogin.html";
       currentUser = user;
       loadPinsFromFirebase();
+
+      onValue(ref(db, "pins/" + currentUser.uid), snapshot => {
+        const userPins = snapshot.val();
+        if (!userPins) return;
+        ["eventPins","moodPins","shopPins"].forEach(type => {
+          const group = userPins[type] || {};
+          Object.keys(group).forEach(pinId => {
+            const marker = markers[pinId];
+            if (marker) attachDeleteButton(marker, currentUser.uid, type, pinId);
+          });
+        });
+      });
     });
 
     function addPin(lat, lng, title, description, songLink = "") {
@@ -169,23 +181,17 @@
       return marker;
     }
     function attachDeleteButton(marker, userId, type, pinId) {
-      // build a unique button ID
       const deleteBtnId = `delete-${pinId}`;
-    
-      // grab the existing popup HTML, append our button, and reset it
+      // grab existing popup HTML, append our button, and reset it
       const original = marker.getPopup().getContent();
-      const withBtn = original + 
-        `<br><button id="${deleteBtnId}" class="btn btn-danger btn-sm mt-2">
-           Delete
-         </button>`;
+      const withBtn = original +
+        `<br><button id="${deleteBtnId}" class="btn btn-danger btn-sm mt-2">Delete</button>`;
       marker.setPopupContent(withBtn);
     
-      // wire up the click when the popup opens
+      // wire up the click each time the popup opens
       marker.on("open", () => {
         const btn = document.getElementById(deleteBtnId);
-        if (btn) {
-          btn.onclick = () => deletePin(userId, type, pinId, marker);
-        }
+        if (btn) btn.onclick = () => deletePin(userId, type, pinId, marker);
       });
     }
 
@@ -193,8 +199,8 @@
       const pinRef = ref(db, `pins/${userId}/${type}/${pinId}`);
       remove(pinRef)
         .then(() => {
-          marker.removeFrom(earth);      // WebGLEarth’s removal call
-          delete markers[pinId];         // clean up your lookup map
+          marker.removeFrom(earth);   // WebGLEarth’s proper removal call
+          delete markers[pinId];      // clean up your map if you’re tracking them
         })
         .catch(err => {
           console.error("Delete failed:", err);
@@ -204,34 +210,25 @@
 
     function loadPinsFromFirebase() {
       onValue(ref(db, "pins"), snapshot => {
-        const all = snapshot.val();
-        if (!all) return;
-    
-        Object.entries(all).forEach(([userId, user]) => {
-          ["eventPins","moodPins","shopPins"].forEach(type => {
+        const allPins = snapshot.val();
+        if (!allPins) return;
+        Object.entries(allPins).forEach(([userId, user]) => {
+          ["eventPins", "moodPins", "shopPins"].forEach(type => {
             const group = user[type];
-            if (!group) return;
-    
-            Object.entries(group).forEach(([pinId, pin]) => {
-              if (!pin.geolocation) return;
-              
-              // create the marker…
-              const m = addPin(
-                pin.geolocation.lat,
-                pin.geolocation.lng,
-                pin.title,
-                pin.description,
-                pin.songLink || ""
-              );
-    
-              // store it for later removal
-              markers[pinId] = m;
-    
-              // if it’s *your* pin, attach the Delete UI
-              if (auth.currentUser?.uid === userId) {
-                attachDeleteButton(m, userId, type, pinId);
-              }
-            });
+            if (group) {
+              Object.entries(group).forEach(([pinId, pin]) => {
+                if (pin.geolocation) {
+                  // STILL calls your original addPin signature
+                  addPin(
+                    pin.geolocation.lat,
+                    pin.geolocation.lng,
+                    pin.title,
+                    pin.description,
+                    pin.songLink || ""
+                  );
+                }
+              });
+            }
           });
         });
       });
