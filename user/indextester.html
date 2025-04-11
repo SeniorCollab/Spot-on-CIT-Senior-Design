@@ -163,19 +163,18 @@
 
     function addPin(lat, lng, title, description, songLink = "", userId = null, type = null, pinId = null) {
       const marker = WE.marker([lat, lng]).addTo(earth);
-      let content = `<strong>${title}</strong><br>${description}`;
-      if (songLink) content += `<br><a href="${songLink}" target="_blank">Song</a>`;
-
-      if (auth.currentUser && auth.currentUser.uid === userId && type && pinId) {
-        const deleteBtnId = `delete-${pinId}`;
-        content += `<br><button id="${deleteBtnId}" class="btn btn-danger btn-sm mt-2">Delete</button>`;
-        marker.bindPopup(content);
+      // … build your popup HTML …
+      marker.bindPopup(content);
+    
+      // store it so deletePin can find it:
+      if (pinId) markers[pinId] = marker;
+    
+      // only wire up the delete button if it's yours
+      if (auth.currentUser?.uid === userId && type && pinId) {
         marker.on("open", () => {
-          const btn = document.getElementById(deleteBtnId);
-          if (btn) btn.onclick = () => deletePin(userId, type, pinId, marker);
+          const btn = document.getElementById(`delete-${pinId}`);
+          if (btn) btn.onclick = () => deletePin(userId, type, pinId);
         });
-      } else {
-        marker.bindPopup(content);
       }
     }
 
@@ -207,12 +206,21 @@
       });
     }
 
-    function deletePin(userId, type, pinId, marker) {
+    function deletePin(userId, type, pinId) {
       const pinRef = ref(db, `pins/${userId}/${type}/${pinId}`);
-      remove(pinRef).then(() => {
-        earth.removeLayer(marker);
-        delete markers[pinId];
-      });
+      remove(pinRef)
+        .then(() => {
+          const marker = markers[pinId];
+          if (marker) {
+            // the proper WebGLEarth way:
+            marker.removeFrom(earth);
+            delete markers[pinId];
+          }
+        })
+        .catch(err => {
+          console.error("Failed to delete pin:", err);
+          alert("Could not delete pin. Try again?");
+        });
     }
     
 
