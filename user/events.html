@@ -134,7 +134,8 @@
         <div class="event-date text-muted mt-1">
           ${event.geolocation ? `Location: ${event.geolocation.lat}, ${event.geolocation.lng}` : ""}
         </div>
-        <div class="event-actions">
+        ${event.imageUrl ? `<img src="${event.imageUrl}" alt="Event Image" class="img-fluid rounded mt-3" style="max-height: 250px; object-fit: cover;">` : ""}
+        <div class="event-actions mt-3">
           <button class="btn btn-sm btn-outline-primary me-2" data-edit="${eventId}">Edit</button>
           <button class="btn btn-sm btn-outline-danger" data-delete="${eventId}">Delete</button>
         </div>
