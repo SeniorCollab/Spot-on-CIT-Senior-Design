@@ -3,11 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <title>Interactive Map with Editable Pins</title>
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  >
-  <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
   <style>
     html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
     #bgvideo { position: fixed; top: 0; left: 0; min-width: 100%; min-height: 100%; z-index: -2; object-fit: cover; }
@@ -16,15 +13,13 @@
   </style>
 </head>
 <body>
-  <!-- Background video -->
   <video autoplay muted loop id="bgvideo">
     <source src="stars.mp4" type="video/mp4">
   </video>
 
-  <!-- Globe container -->
   <div id="earth_div"></div>
 
-  <!-- Offcanvas toggle -->
+  <!-- Hamburger Button -->
   <button class="btn btn-primary" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
     <span class="navbar-toggler-icon"></span>
   </button>
@@ -36,7 +31,6 @@
       <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body">
-      <!-- Navigation -->
       <nav class="navbar">
         <ul class="navbar-nav">
           <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
@@ -48,14 +42,12 @@
         </ul>
       </nav>
 
-      <!-- Search form -->
       <h6 class="mt-4">Search Pins</h6>
       <form id="searchForm">
         <input type="text" class="form-control mb-2" id="searchInput" placeholder="Search by description">
         <button type="submit" class="btn btn-primary w-100">Search</button>
       </form>
 
-      <!-- Manual pin add -->
       <h6 class="mt-4">Add a New Pin</h6>
       <form id="pinForm">
         <div class="mb-2">
@@ -75,23 +67,21 @@
     </div>
   </div>
 
-  <!-- Modal for adding pins -->
+  <!-- Modals (pinModal is triggered on globe click) -->
   <div class="modal fade" id="pinModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Add Pin</h5>
-          <button class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
+        <div class="modal-header"><h5 class="modal-title">Add Pin</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
-          <!-- Type chooser -->
+
           <div id="modalChoice" class="text-center">
             <p>Select Pin Type:</p>
             <button class="btn btn-outline-primary mb-2" id="modalBtnSimple">Pin Event</button>
             <button class="btn btn-outline-secondary mb-2" id="modalBtnDetailed">Pin Mood</button>
             <button class="btn btn-outline-success mb-2" id="modalBtnShop">Pin Shop Item</button>
           </div>
-          <!-- Event form -->
+
+          <!-- Event -->
           <form id="simpleModalForm" class="d-none">
             <input type="text" class="form-control mb-2" id="modalTitleSimple" placeholder="Title" required>
             <input type="text" class="form-control mb-2" id="modalDescSimple" placeholder="Description" required>
@@ -102,7 +92,8 @@
             <button type="submit" class="btn btn-primary w-100">Save Event Pin</button>
             <button type="button" class="btn btn-link mt-2" id="backFromSimpleModal">← Back</button>
           </form>
-          <!-- Mood form -->
+
+          <!-- Mood -->
           <form id="detailedModalForm" class="d-none">
             <input type="text" class="form-control mb-2" id="modalTitleDet" placeholder="Title" required>
             <textarea class="form-control mb-2" id="modalDescDet" placeholder="Description" rows="2" required></textarea>
@@ -112,7 +103,8 @@
             <button type="submit" class="btn btn-primary w-100">Save Mood Pin</button>
             <button type="button" class="btn btn-link mt-2" id="backFromDetailedModal">← Back</button>
           </form>
-          <!-- Shop form -->
+
+          <!-- Shop -->
           <form id="shopModalForm" class="d-none">
             <input type="text" class="form-control mb-2" id="modalTitleShop" placeholder="Title" required>
             <textarea class="form-control mb-2" id="modalDescShop" placeholder="Description" rows="2" required></textarea>
@@ -125,194 +117,218 @@
             <button type="submit" class="btn btn-success w-100">Save Shop Item</button>
             <button type="button" class="btn btn-link mt-2" id="backFromShopModal">← Back</button>
           </form>
+
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Scripts -->
   <script src="https://www.webglearth.com/v2/api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module">
-    // --- Firebase setup ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
     const firebaseConfig = {
-      apiKey:    "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
-      authDomain:"spoton-cit481.firebaseapp.com",
-      databaseURL:"https://spoton-cit481-default-rtdb.firebaseio.com",
+      apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
+      authDomain: "spoton-cit481.firebaseapp.com",
+      databaseURL: "https://spoton-cit481-default-rtdb.firebaseio.com",
       projectId: "spoton-cit481",
-      storageBucket:"spoton-cit481.appspot.com",
-      messagingSenderId:"753873898041",
-      appId:     "1:753873898041:web:bde5e8f86aea63b175dbe8"
+      storageBucket: "spoton-cit481.appspot.com",
+      messagingSenderId: "753873898041",
+      appId: "1:753873898041:web:bde5e8f86aea63b175dbe8"
     };
 
-    const app  = initializeApp(firebaseConfig);
-    const db   = getDatabase(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
     const auth = getAuth(app);
 
     let currentUser = null;
-    let eventImageUrl = "";
-    let shopImageUrl  = "";
-    const markers = {};
-    const modal   = new bootstrap.Modal(document.getElementById("pinModal"));
+    let markers = {};
+    let shopImageUrl = "";
+    const modal = new bootstrap.Modal(document.getElementById("pinModal"));
 
-    // --- Initialize Globe ---
     const earth = new WE.map("earth_div");
     earth.setView([0, 0], 2);
     WE.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "© OpenStreetMap contributors"
     }).addTo(earth);
 
-    // --- Auth listener & load pins ---
     onAuthStateChanged(auth, user => {
       if (!user) return window.location.href = "user/userlogin.html";
       currentUser = user;
       loadPinsFromFirebase();
     });
 
-    // --- Add a pin with optional delete button ---
     function addPin(lat, lng, title, description, songLink = "", userId = null, type = null, pinId = null) {
       const marker = WE.marker([lat, lng]).addTo(earth);
       let content = `<strong>${title}</strong><br>${description}`;
       if (songLink) content += `<br><a href="${songLink}" target="_blank">Song</a>`;
 
-      // Show delete only for creator
-      if (auth.currentUser.uid === userId && type && pinId) {
-        const btnId = `del-${pinId}`;
-        content += `<br><button id="${btnId}" class="btn btn-danger btn-sm mt-2">Delete</button>`;
+      if (auth.currentUser && auth.currentUser.uid === userId && type && pinId) {
+        const deleteBtnId = `delete-${pinId}`;
+        content += `<br><button id="${deleteBtnId}" class="btn btn-danger btn-sm mt-2">Delete</button>`;
         marker.bindPopup(content);
         marker.on("open", () => {
-          const btn = document.getElementById(btnId);
-          if (btn) btn.onclick = async () => {
-            if (!confirm("Delete this pin?")) return;
-            await remove(ref(db, `pins/${userId}/${type}/${pinId}`));
-            marker.remove();
-            delete markers[pinId];
-          };
+          const btn = document.getElementById(deleteBtnId);
+          if (btn) btn.onclick = () => deletePin(userId, type, pinId, marker);
         });
       } else {
         marker.bindPopup(content);
       }
-
-      markers[pinId] = marker;
     }
 
-    // --- Load all pins ---
     function loadPinsFromFirebase() {
       onValue(ref(db, "pins"), snapshot => {
-        const all = snapshot.val() || {};
-        Object.entries(all).forEach(([uid, user]) => {
-          ["eventPins","moodPins","shopPins"].forEach(type => {
-            const group = user[type] || {};
-            Object.entries(group).forEach(([pinId, pin]) => {
-              if (pin.geolocation) {
-                addPin(
-                  pin.geolocation.lat,
-                  pin.geolocation.lng,
-                  pin.title   || "Untitled",
-                  pin.description || "",
-                  pin.songLink   || "",
-                  uid,
-                  type,
-                  pinId
-                );
-              }
-            });
+        const allPins = snapshot.val();
+        if (!allPins) return;
+        Object.entries(allPins).forEach(([userId, user]) => {
+          ["eventPins", "moodPins", "shopPins"].forEach(type => {
+            const group = user[type];
+            if (group) {
+              Object.entries(group).forEach(([pinId, pin]) => {
+                if (pin.geolocation) {
+                  addPin(
+                    pin.geolocation.lat,
+                    pin.geolocation.lng,
+                    pin.title,
+                    pin.description,
+                    pin.songLink || "",
+                    userId,
+                    type,
+                    pinId
+                  );
+                }
+              });
+            }
           });
         });
       });
     }
 
-    // --- Save pin helpers ---
-    function saveEventPin(lat, lng, title, desc, imageUrl="") {
-      return set(push(ref(db, `pins/${currentUser.uid}/eventPins`)), {
+    function deletePin(userId, type, pinId, marker) {
+      const pinRef = ref(db, `pins/${userId}/${type}/${pinId}`);
+      remove(pinRef).then(() => {
+        earth.removeLayer(marker);
+        delete markers[pinId];
+      });
+    }
+    
+
+    function saveEventPin(lat, lng, title, desc, imageUrl = "") {
+      const refPath = ref(db, `pins/${currentUser.uid}/eventPins`);
+      return set(push(refPath), {
         title, description: desc, imageUrl,
         geolocation: { lat, lng },
         timestamp: Date.now()
       });
     }
-    function saveMoodPin(lat, lng, title, desc, songLink="") {
-      return set(push(ref(db, `pins/${currentUser.uid}/moodPins`)), {
+
+    function saveMoodPin(lat, lng, title, desc, songLink = "") {
+      const refPath = ref(db, `pins/${currentUser.uid}/moodPins`);
+      return set(push(refPath), {
         title, description: desc, songLink,
         geolocation: { lat, lng },
         timestamp: Date.now()
       });
     }
-    function saveShopPin(lat, lng, title, desc, imageUrl="", quantity, link) {
-      return set(push(ref(db, `pins/${currentUser.uid}/shopPins`)), {
+
+    function saveShopPin(lat, lng, title, desc, imageUrl = "", quantity, link) {
+      const refPath = ref(db, `pins/${currentUser.uid}/shopPins`);
+      return set(push(refPath), {
         title, description: desc, imageUrl, quantity, link,
         geolocation: { lat, lng },
         timestamp: Date.now()
       });
     }
 
-    // --- Cloudinary upload ---
-    function openCloudinary(cb) {
+    function openCloudinary(callback) {
       cloudinary.createUploadWidget({
         cloudName: "djhoct1eh",
         uploadPreset: "ml_default"
       }, (err, result) => {
-        if (!err && result && result.event === "success") cb(result.info.secure_url);
+        if (!err && result && result.event === "success") {
+          callback(result.info.secure_url);
+        }
       }).open();
     }
-    document.getElementById("uploadEventBtn").onclick = () =>
-      openCloudinary(url => { eventImageUrl = url; alert("Event image uploaded"); });
-    document.getElementById("uploadShopBtn").onclick = () =>
-      openCloudinary(url => { shopImageUrl = url; alert("Shop image uploaded"); });
 
-    // --- Modal form handlers ---
+    document.getElementById("uploadEventBtn").addEventListener("click", () => {
+      openCloudinary(url => {
+        eventImageUrl = url;
+        alert("Event image uploaded");
+      });
+    });
+
+    document.getElementById("uploadShopBtn").addEventListener("click", () => {
+      openCloudinary(url => {
+        shopImageUrl = url;
+        alert("Shop image uploaded");
+      });
+    });
+
     document.getElementById("simpleModalForm").addEventListener("submit", e => {
       e.preventDefault();
-      const lat   = +document.getElementById("modalLatSimple").value;
-      const lng   = +document.getElementById("modalLngSimple").value;
+      const lat = parseFloat(document.getElementById("modalLatSimple").value);
+      const lng = parseFloat(document.getElementById("modalLngSimple").value);
       const title = document.getElementById("modalTitleSimple").value;
-      const desc  = document.getElementById("modalDescSimple").value;
+      const desc = document.getElementById("modalDescSimple").value;
       saveEventPin(lat, lng, title, desc, eventImageUrl).then(() => modal.hide());
     });
+
     document.getElementById("detailedModalForm").addEventListener("submit", e => {
       e.preventDefault();
-      const lat   = +document.getElementById("modalLatDet").value;
-      const lng   = +document.getElementById("modalLngDet").value;
+      const lat = parseFloat(document.getElementById("modalLatDet").value);
+      const lng = parseFloat(document.getElementById("modalLngDet").value);
       const title = document.getElementById("modalTitleDet").value;
-      const desc  = document.getElementById("modalDescDet").value;
-      const song  = document.getElementById("modalSongDet").value;
+      const desc = document.getElementById("modalDescDet").value;
+      const song = document.getElementById("modalSongDet").value;
       saveMoodPin(lat, lng, title, desc, song).then(() => modal.hide());
     });
+
     document.getElementById("shopModalForm").addEventListener("submit", e => {
       e.preventDefault();
-      const lat      = +document.getElementById("modalLatShop").value;
-      const lng      = +document.getElementById("modalLngShop").value;
-      const title    = document.getElementById("modalTitleShop").value;
-      const desc     = document.getElementById("modalDescShop").value;
+      const title = document.getElementById("modalTitleShop").value;
+      const desc = document.getElementById("modalDescShop").value;
       const quantity = document.getElementById("modalNumberShop").value;
-      const link     = document.getElementById("modalLinkShop").value;
+      const link = document.getElementById("modalLinkShop").value;
+      const lat = parseFloat(document.getElementById("modalLatShop").value);
+      const lng = parseFloat(document.getElementById("modalLngShop").value);
       saveShopPin(lat, lng, title, desc, shopImageUrl, quantity, link).then(() => modal.hide());
     });
 
-    // --- Globe click opens modal ---
-    earth.on("click", e => {
-      if (!e.latlng) return;
-      const { lat, lng } = e.latlng;
-      ["Simple","Det","Shop"].forEach(s => {
-        document.getElementById(`modalLat${s}`).value = lat;
-        document.getElementById(`modalLng${s}`).value = lng;
-      });
-      hideForms();
-      modal.show();
+    // Globe click opens modal
+    earth.on("click", event => {
+      if (event.latlng) {
+        const lat = event.latlng.lat;
+        const lng = event.latlng.lng;
+        ["Simple", "Det", "Shop"].forEach(type => {
+          document.getElementById(`modalLat${type}`).value = lat;
+          document.getElementById(`modalLng${type}`).value = lng;
+        });
+        modal.show();
+      }
     });
 
-    // --- Modal navigation ---
-    document.getElementById("modalBtnSimple").onclick   = () => { hideForms(); document.getElementById("simpleModalForm").classList.remove("d-none"); };
-    document.getElementById("modalBtnDetailed").onclick = () => { hideForms(); document.getElementById("detailedModalForm").classList.remove("d-none"); };
-    document.getElementById("modalBtnShop").onclick     = () => { hideForms(); document.getElementById("shopModalForm").classList.remove("d-none"); };
-    ["backFromSimpleModal","backFromDetailedModal","backFromShopModal"].forEach(id => {
-      document.getElementById(id).onclick = () => { hideForms(); document.getElementById("modalChoice").classList.remove("d-none"); };
-    });
+    // Back buttons
+    document.getElementById("modalBtnSimple").onclick = () => {
+      hideForms(); document.getElementById("simpleModalForm").classList.remove("d-none");
+    };
+    document.getElementById("modalBtnDetailed").onclick = () => {
+      hideForms(); document.getElementById("detailedModalForm").classList.remove("d-none");
+    };
+    document.getElementById("modalBtnShop").onclick = () => {
+      hideForms(); document.getElementById("shopModalForm").classList.remove("d-none");
+    };
+    document.getElementById("backFromSimpleModal").onclick =
+    document.getElementById("backFromDetailedModal").onclick =
+    document.getElementById("backFromShopModal").onclick = () => {
+      hideForms(); document.getElementById("modalChoice").classList.remove("d-none");
+    };
+
     function hideForms() {
-      ["modalChoice","simpleModalForm","detailedModalForm","shopModalForm"].forEach(id => {
+      ["modalChoice", "simpleModalForm", "detailedModalForm", "shopModalForm"].forEach(id => {
         document.getElementById(id).classList.add("d-none");
       });
     }
