@@ -195,7 +195,7 @@
        const pinRef = ref(db, `pins/${currentUser.uid}/${type}/${pinId}`);
        remove(pinRef)
          .then(() => {
-           markers[pinId].remove();
+           earth.removeLayer(markers[pinId]);
            delete markers[pinId];
          })
          .catch(err => {
