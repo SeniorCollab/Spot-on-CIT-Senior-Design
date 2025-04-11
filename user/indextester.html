@@ -160,18 +160,33 @@
       currentUser = user;
       loadPinsFromFirebase();
 
-      onValue(ref(db, "pins/" + currentUser.uid), snapshot => {
-        const userPins = snapshot.val();
-        if (!userPins) return;
-        ["eventPins","moodPins","shopPins"].forEach(type => {
-          const group = userPins[type] || {};
-          Object.keys(group).forEach(pinId => {
-            const marker = markers[pinId];
-            if (marker) attachDeleteButton(marker, currentUser.uid, type, pinId);
-          });
-        });
-      });
+      //onValue(ref(db, "pins/" + currentUser.uid), snapshot => {
+       // const userPins = snapshot.val();
+       // if (!userPins) return;
+        //["eventPins","moodPins","shopPins"].forEach(type => {
+        //  const group = userPins[type] || {};
+         // Object.keys(group).forEach(pinId => {
+          //  const marker = markers[pinId];
+          //  if (marker) attachDeleteButton(marker, currentUser.uid, type, pinId);
+         // });
+        //});
+      //});
     });
+    const originalAddPin = addPin;
+    addPin = function(lat, lng, title, description, songLink = "", userId, type, pinId) {
+      // call the real addPin
+      const marker = originalAddPin(lat, lng, title, description, songLink);
+
+      // if we have a pinId, stash it
+      if (pinId) markers[pinId] = marker;
+
+      // if this pin belongs to the current user, attach the Delete UI
+      if (auth.currentUser?.uid === userId && type && pinId) {
+        attachDeleteButton(marker, userId, type, pinId);
+      }
+
+      return marker;
+    };
 
     function addPin(lat, lng, title, description, songLink = "") {
       const marker = WE.marker([lat, lng]).addTo(earth);
@@ -195,12 +210,15 @@
       });
     }
 
-    function deletePin(userId, type, pinId, marker) {
+    function deletePin(userId, type, pinId) {
       const pinRef = ref(db, `pins/${userId}/${type}/${pinId}`);
       remove(pinRef)
         .then(() => {
-          marker.removeFrom(earth);   // WebGLEarth’s proper removal call
-          delete markers[pinId];      // clean up your map if you’re tracking them
+          const marker = markers[pinId];
+          if (marker) {
+            marker.removeFrom(earth);   // correct WebGLEarth removal
+            delete markers[pinId];      // clean up our lookup
+          }
         })
         .catch(err => {
           console.error("Delete failed:", err);
