@@ -207,23 +207,12 @@
       });
     }
 
-    // core generic delete
-    async function deletePin(userId, type, pinId, marker) {
+    function deletePin(userId, type, pinId, marker) {
       const pinRef = ref(db, `pins/${userId}/${type}/${pinId}`);
-      await remove(pinRef);
-      earth.removeLayer(marker);
-      delete markers[pinId];
-    }
-
-    // wrappers for readability
-    function deleteEventPin(pinId, marker) {
-      return deletePin(currentUser.uid, "eventPins", pinId, marker);
-    }
-    function deleteMoodPin(pinId, marker) {
-      return deletePin(currentUser.uid, "moodPins", pinId, marker);
-    }
-    function deleteShopPin(pinId, marker) {
-      return deletePin(currentUser.uid, "shopPins", pinId, marker);
+      remove(pinRef).then(() => {
+        earth.removeLayer(marker);
+        delete markers[pinId];
+      });
     }
     
 
