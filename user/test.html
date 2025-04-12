@@ -151,6 +151,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
+    // 1) Firebase Initialization
     const firebaseConfig = {
       apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
       authDomain: "spoton-cit481.firebaseapp.com",
@@ -160,11 +161,10 @@
       messagingSenderId: "753873898041",
       appId: "1:753873898041:web:bde5e8f86aea63b175dbe8"
     };
-
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // 1) Create globe
+    // 2) Create globe
     const earth = new WE.map('earth_div');
     earth.setView([0, 0], 2);
     WE.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -172,7 +172,7 @@
       subdomains: 'abc'
     }).addTo(earth);
 
-    // 2) Utility to generate embed if the pin has a "songLink"
+    // 3) Utility to generate embed if the pin has a "songLink"
     function generateEmbedContent(link) {
       if (!link) return "";
 
@@ -196,22 +196,25 @@
       return `<iframe class="pin-iframe" src="${link}" allowfullscreen></iframe>`;
     }
 
-    // 3) Add pins from Firebase to the globe
-    function addPin(lat, lng, title, description, songLink = "") {
+    // 4) Add markers from Firebase to the globe
+    function addPin(lat, lng, title, description, songLink = "", likes = 0) {
       const marker = WE.marker([lat, lng]).addTo(earth);
 
       // Wrap popup content in .pin-popup-content to get the gradient background
-      let content = `<div class="pin-popup-content">
-        <strong>${title || "Untitled"}</strong><br>${description || ""}`;
+      let content = `
+        <div class="pin-popup-content">
+          <strong>${title || "Untitled"}</strong><br>
+          ${description || ""}
+      `;
 
       // If there's a link, embed it in an iframe
       if (songLink) {
         content += "<br>" + generateEmbedContent(songLink);
       }
 
-      content += `</div>`;
+      // Display the like count but not clickable
+      content += `<br><strong>Likes:</strong> ${likes}</div>`;
 
-      // Single-click on the marker opens this popup
       marker.bindPopup(content);
     }
 
@@ -223,22 +226,24 @@
         if (!allUserPins) return;
 
         Object.values(allUserPins).forEach(userPins => {
+          // Check each pin category
           ["eventPins", "moodPins", "shopPins"].forEach(type => {
             const pinGroup = userPins[type];
-            if (pinGroup) {
-              Object.values(pinGroup).forEach(pin => {
-                const { title, description, songLink, geolocation } = pin;
-                if (geolocation) {
-                  addPin(
-                    geolocation.lat,
-                    geolocation.lng,
-                    title,
-                    description,
-                    songLink
-                  );
-                }
-              });
-            }
+            if (!pinGroup) return;
+
+            Object.values(pinGroup).forEach(pin => {
+              const { title, description, songLink, geolocation, likes } = pin;
+              if (geolocation) {
+                addPin(
+                  geolocation.lat,
+                  geolocation.lng,
+                  title,
+                  description,
+                  songLink,
+                  likes || 0
+                );
+              }
+            });
           });
         });
       });
