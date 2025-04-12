@@ -338,7 +338,7 @@
       signOut(auth)
         .then(() => {
           // Signed out successfully
-          window.location.href = "index.html";
+          window.location.href = "../index.html";
         })
         .catch(err => {
           console.error("Sign-out error:", err);
@@ -356,7 +356,7 @@
 
       const path = showOnlyMyPins ? `pins/${currentUser.uid}` : "pins";
       onValue(ref(db, path), snapshot => {
-        // Clear out old markers on each data update
+        // Clear out old markers again on each update
         markersList.forEach(m => m.removeFrom(earth));
         markersList = [];
 
@@ -364,8 +364,10 @@
         if (!data) return;
 
         if (showOnlyMyPins) {
+          // data = { eventPins: {...}, moodPins: {...}, shopPins: {...} }
           loadUserPinTypes(currentUser.uid, data);
         } else {
+          // data = { userId1: {...}, userId2: {...}, ... }
           Object.entries(data).forEach(([userId, userData]) => {
             loadUserPinTypes(userId, userData);
           });
@@ -429,18 +431,10 @@
     }
 
     /* ------------------------------------------------------------------
-       Create a marker + popup with color-coded icons
+       Create a marker + popup (including Edit/Delete if user is owner)
     ------------------------------------------------------------------ */
     function addPin(lat, lng, pinData, userId, pinId, pinType) {
-      // Different icon colors for user pins vs. others
-      let iconUrl = "http://maps.google.com/mapfiles/ms/icons/red-dot.png";
-      if (userId === currentUser.uid) {
-        iconUrl = "http://maps.google.com/mapfiles/ms/icons/green-dot.png";
-      }
-
-      const marker = WE.marker([lat, lng], {
-        icon: iconUrl
-      }).addTo(earth);
+      const marker = WE.marker([lat, lng]).addTo(earth);
 
       let content = `<div class="pin-popup-content">`;
 
