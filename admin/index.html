@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Interactive Map (Admin) - CLU/Rinzler Theme</title>
+  <title>Interactive Map (Admin)</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Orbitron Font -->
+  <!-- Orbitron Font (Tron-like) -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap">
 
   <style>
-    /* Global: CLU/Rinzler Tron Theme */
+    /* Global Tron-style (CLU/Rinzler color scheme) */
     html, body {
       margin: 0;
       padding: 0;
@@ -17,10 +17,10 @@
       height: 100%;
       overflow: hidden;
       font-family: 'Orbitron', sans-serif;
-      background-color: #000;  /* Black background behind the video */
-      color: #ff3300;          /* Tron orange/red */
+      background-color: #000; /* pitch black */
+      color: #ff3300; /* bright orange/red as base text color */
     }
-    /* Background Video (stars) */
+    /* Background Video */
     #bgvideo {
       position: fixed;
       top: 0;
@@ -29,7 +29,7 @@
       min-height: 100%;
       z-index: -2;
       object-fit: cover;
-      opacity: 1;  /* fully visible */
+      opacity: 1;
     }
     /* WebGL Earth Container */
     #earth_div {
@@ -40,7 +40,7 @@
       height: 100%;
       z-index: 0;
     }
-    /* Offcanvas Toggle (Custom Hamburger) */
+    /* Offcanvas Toggle (Hamburger) */
     #offcanvasToggle {
       position: fixed;
       top: 20px;
@@ -57,6 +57,7 @@
       border: none;
       padding: 0;
       cursor: pointer;
+      z-index: 20;
     }
     .hamburger-icon {
       width: 30px;
@@ -69,14 +70,14 @@
       display: block;
       height: 4px;
       width: 100%;
-      background-color: #ff3300; /* Tron orange/red glow */
+      background-color: #ff3300; /* orange/red glow */
       border-radius: 2px;
       box-shadow: 0 0 5px #ff3300;
     }
-    /* Offcanvas (CLU/Rinzler Tron style) */
+    /* Offcanvas */
     .offcanvas {
       background-color: rgba(0, 0, 0, 0.95);
-      border-left: 2px solid #ff3300; /* orange border */
+      border-left: 2px solid #ff3300;
     }
     .offcanvas-header,
     .offcanvas-body,
@@ -88,11 +89,11 @@
       border-bottom: 1px solid rgba(255, 51, 0, 0.2);
       padding: 0.75rem 1rem;
     }
-    .offcanvas .nav-link.active,
-    .offcanvas .nav-link:hover {
-      background-color: rgba(63, 0, 0, 0.5);
+    .offcanvas .nav-link:hover,
+    .offcanvas .nav-link.active {
+      background-color: rgba(63, 0, 0, 0.5); /* a darker red overlay */
     }
-    /* Admin Pin Form styling */
+    /* Admin Pin Form */
     #pinForm label {
       color: #ff3300;
     }
@@ -118,7 +119,7 @@
       background-color: #ff6600;
       border-color: #ff6600;
     }
-    /* Popup style for admin pins */
+    /* Pin Popup (Tron style: CLU/Rinzler) */
     .pin-popup-content {
       background: rgba(63, 0, 0, 0.9);
       border: 1px solid #ff3300;
@@ -148,11 +149,20 @@
       border: 2px solid #ff3300;
       box-shadow: 0 0 5px #ff3300;
     }
+    /* Buttons in the popup */
+    .btn-outline-light {
+      border-color: #ff3300;
+      color: #ff3300;
+      margin-right: 0.4rem;
+    }
+    .btn-outline-light:hover {
+      background-color: #ff3300;
+      color: #000;
+    }
     .btn-warning {
       background-color: #ff6600;
       border-color: #ff6600;
       color: #000;
-      margin-right: 6px;
     }
     .btn-warning:hover {
       background-color: #ff9933;
@@ -165,6 +175,25 @@
     .btn-danger:hover {
       background-color: #ff3333;
     }
+    .btn-outline-primary,
+    .btn-outline-secondary {
+      border-color: #ff3300 !important;
+      color: #ff3300 !important;
+    }
+    .btn-outline-primary:hover,
+    .btn-outline-secondary:hover {
+      background-color: #ff3300;
+      color: #000;
+    }
+    /* Additional styling for modals, etc. */
+    .modal-content {
+      background-color: rgba(63, 0, 0, 0.95);
+      border: 1px solid #ff3300;
+      color: #ff3300;
+    }
+    .modal-header .btn-close {
+      filter: brightness(0) invert(1);
+    }
   </style>
 </head>
 <body>
@@ -176,7 +205,7 @@
   <!-- WebGL Earth Container -->
   <div id="earth_div"></div>
 
-  <!-- Offcanvas Toggle -->
+  <!-- Offcanvas Toggle (hamburger) -->
   <button class="hamburger-btn" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
     <div class="hamburger-icon">
       <span></span>
@@ -185,11 +214,11 @@
     </div>
   </button>
 
-  <!-- Offcanvas Sidebar (Admin) -->
+  <!-- Offcanvas Sidebar for Navigation -->
   <div class="offcanvas offcanvas-end" id="offcanvasNavbar" tabindex="-1">
     <div class="offcanvas-header">
       <h5 class="offcanvas-title">Spot On (Admin)</h5>
-      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"></button>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body">
       <nav class="navbar">
@@ -202,7 +231,7 @@
         </ul>
       </nav>
 
-      <!-- Admin Create Pin Form -->
+      <!-- Admin Add Pin Form -->
       <h6 class="mt-4">Add a New Pin (Admin)</h6>
       <form id="pinForm">
         <div class="mb-3">
@@ -222,14 +251,32 @@
     </div>
   </div>
 
+  <!-- Add Pin Modal for Pin Types (optional) -->
+  <div class="modal fade" id="pinModal" tabindex="-1" aria-labelledby="pinModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="pinModalLabel">Add Pin</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center">
+          <p>Select Pin Type:</p>
+          <button type="button" class="btn btn-outline-primary mb-2" id="modalBtnSimple">Pin Event</button>
+          <button type="button" class="btn btn-outline-secondary mb-2" id="modalBtnDetailed">Pin Mood</button>
+          <button type="button" class="btn btn-outline-success mb-2" id="modalBtnShop">Pin Shop Item</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Libraries -->
   <script src="https://www.webglearth.com/v2/api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Firebase + Admin Logic -->
+  <!-- Firebase + Admin Logic (full control) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
     import { getDatabase, ref, push, set, onValue, get, remove, update } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
     const firebaseConfig = {
@@ -247,9 +294,10 @@
     const db = getDatabase(app);
 
     let currentUser = null;
+    // Markers array
     let markersList = [];
 
-    // Initialize WebGL Earth
+    // WebGL Earth
     const earth = new WE.map("earth_div");
     earth.setView([0, 0], 2);
     WE.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -264,10 +312,10 @@
         window.location.href = "../admin/adminlogin.html";
         return;
       }
-      // Check if user is admin
+      // Check admin privileges
       const adminRef = ref(db, "admin/" + user.uid);
-      const snapshot = await get(adminRef);
-      if (!snapshot.exists()) {
+      const snap = await get(adminRef);
+      if (!snap.exists()) {
         alert("Access denied. You are not an admin.");
         window.location.href = "../index.html";
         return;
@@ -276,114 +324,83 @@
       loadAllPins(); 
     });
 
-    // Load all pins from 'pins' root
+    // Load all pins from all users (admin can see all)
     function loadAllPins() {
-      // Remove old markers
+      // Clear existing markers
       markersList.forEach(m => m.removeFrom(earth));
       markersList = [];
+      // Listen to "pins" root
       onValue(ref(db, "pins"), snapshot => {
-        // Clear again on each update
         markersList.forEach(m => m.removeFrom(earth));
         markersList = [];
-
         const data = snapshot.val();
-        if (!data) return;
-        // data = { somePinId: {...}, anotherPinId: {...}, etc. }
-        // or structured as: { userId1: { pinId1: {...}, pinId2: {...} }, userId2: {...} } 
-        // Depending on how you stored them.
-
-        // If each pin is stored at "pins/pinId", do:
-        Object.entries(data).forEach(([pinKey, pinData]) => {
-          if (!pinData.geolocation) return;
-          // Create marker for each
-          const marker = createMarker(
-            pinData.geolocation.lat,
-            pinData.geolocation.lng,
-            pinData,
-            pinKey // if you store each pin under a random push key at "pins/{pinKey}"
-          );
-          markersList.push(marker);
+        if (!data) return; 
+        // data = { userId1: {eventPins: {...}, moodPins: {...}, shopPins: {...}}, userId2: {...}, ... }
+        Object.entries(data).forEach(([userId, pinTypes]) => {
+          ["eventPins", "moodPins", "shopPins"].forEach(pinType => {
+            const pinsGroup = pinTypes[pinType];
+            if (pinsGroup) {
+              Object.entries(pinsGroup).forEach(([pinId, pinData]) => {
+                if (pinData.geolocation) {
+                  const marker = createMarker(pinData.geolocation.lat, pinData.geolocation.lng, pinData, userId, pinType, pinId);
+                  markersList.push(marker);
+                }
+              });
+            }
+          });
         });
       });
     }
 
-    // Admin can create a new pin in "pins" root
-    document.getElementById("pinForm").addEventListener("submit", (e) => {
-      e.preventDefault();
-      const lat = parseFloat(document.getElementById("latitude").value);
-      const lng = parseFloat(document.getElementById("longitude").value);
-      const description = document.getElementById("description").value.trim();
-
-      const pinsRef = ref(db, "pins");
-      const newPinRef = push(pinsRef);
-      const newPinData = {
-        title: "Untitled",
-        description,
-        geolocation: { lat, lng },
-        userId: currentUser.uid,
-        timestamp: Date.now()
-      };
-      set(newPinRef, newPinData).then(() => {
-        e.target.reset();
-        loadAllPins();
-      });
-    });
-
-    // Double-click => fill lat/lng
-    let lastClickTime = 0;
-    const clickThreshold = 350;
-    earth.on("click", (event) => {
-      const now = Date.now();
-      if (now - lastClickTime < clickThreshold) {
-        if (event.latlng) {
-          document.getElementById("latitude").value = event.latlng.lat.toFixed(5);
-          document.getElementById("longitude").value = event.latlng.lng.toFixed(5);
-        }
-      }
-      lastClickTime = now;
-    });
-
-    // Generate pin popup
-    function createMarker(lat, lng, pinData, pinKey) {
+    // Create a marker with admin controls (edit/delete).
+    function createMarker(lat, lng, pinData, userId, pinType, pinId) {
       const marker = WE.marker([lat, lng]).addTo(earth);
+
       let content = `<div class="pin-popup-content">
         <strong>Title:</strong> ${pinData.title || "Untitled"}<br>
         <strong>Description:</strong> ${pinData.description || ""}`;
 
-      // If there's a link
+      // if there's a link
       if (pinData.songLink) {
-        content += "<br>" + generateEmbedContent(pinData.songLink);
+        content += `<br>${generateEmbedContent(pinData.songLink)}`;
       }
-      // If there's an image
+
+      // if there's an image
       if (pinData.imageUrl) {
         content += `<br><img class="pin-image" src="${pinData.imageUrl}" alt="Pin Image">`;
       }
+
       // Admin Delete / Edit
       content += `
         <br>
         <button class="edit-button btn btn-warning btn-sm mt-2"
-                data-pin-key="${pinKey}">
+                data-user="${userId}"
+                data-type="${pinType}"
+                data-id="${pinId}">
           Edit
         </button>
         <button class="delete-button btn btn-danger btn-sm mt-2"
-                data-pin-key="${pinKey}">
+                data-user="${userId}"
+                data-type="${pinType}"
+                data-id="${pinId}">
           Delete
         </button>
       `;
+
       content += "</div>";
       marker.bindPopup(content);
       return marker;
     }
 
-    // Convert link to embed snippet
+    // Convert user link to an embeddable snippet (song/video).
     function generateEmbedContent(link) {
       if (!link) return "";
-      // If link is a Spotify track
+      // Spotify
       if (link.includes("open.spotify.com/track/")) {
         const embedUrl = link.replace("open.spotify.com/track/", "open.spotify.com/embed/track/");
         return `<iframe class="pin-iframe" src="${embedUrl}" allow="encrypted-media" allowfullscreen></iframe>`;
       }
-      // If link is YouTube
+      // YouTube
       if (link.includes("youtube.com/watch?v=") || link.includes("youtu.be/")) {
         let videoId = "";
         if (link.includes("watch?v=")) {
@@ -406,37 +423,79 @@
       return `<iframe class="pin-iframe" src="${link}" allowfullscreen></iframe>`;
     }
 
-    // Listen for edit / delete clicks
+    // Listen for clicks on edit / delete
     document.addEventListener("click", async (e) => {
       if (e.target.classList.contains("delete-button")) {
-        const pinKey = e.target.dataset.pinKey;
+        const userId = e.target.dataset.user;
+        const pinType = e.target.dataset.type;
+        const pinId = e.target.dataset.id;
         if (confirm("Are you sure you want to delete this pin?")) {
-          await remove(ref(db, "pins/" + pinKey));
+          await remove(ref(db, `pins/${userId}/${pinType}/${pinId}`));
+          loadAllPins();
+        }
+      } 
+      else if (e.target.classList.contains("edit-button")) {
+        const userId = e.target.dataset.user;
+        const pinType = e.target.dataset.type;
+        const pinId = e.target.dataset.id;
+        // Load the pin from DB, show an edit form or do quick inline prompt, etc.
+        const pinRef = ref(db, `pins/${userId}/${pinType}/${pinId}`);
+        const snapshot = await get(pinRef);
+        if (snapshot.exists()) {
+          const pinData = snapshot.val();
+          // For simplicity, let's do a quick prompt-based editing:
+          const newTitle = prompt("Edit Title:", pinData.title || "");
+          if (newTitle === null) return; // user canceled
+          const newDesc = prompt("Edit Description:", pinData.description || "");
+          if (newDesc === null) return; // user canceled
+          const newLink = prompt("Edit Song/Video Link (optional):", pinData.songLink || "");
+          if (newLink === null) return; // user canceled
+          // Save changes
+          await update(pinRef, {
+            title: newTitle,
+            description: newDesc,
+            songLink: newLink
+          });
           loadAllPins();
         }
       }
-      else if (e.target.classList.contains("edit-button")) {
-        const pinKey = e.target.dataset.pinKey;
-        // fetch the pin from DB
-        const pinRef = ref(db, "pins/" + pinKey);
-        const snapshot = await get(pinRef);
-        if (!snapshot.exists()) return;
-        const pinData = snapshot.val();
-        // Quick prompt-based editing
-        const newTitle = prompt("Edit Title:", pinData.title || "");
-        if (newTitle === null) return; // canceled
-        const newDesc = prompt("Edit Description:", pinData.description || "");
-        if (newDesc === null) return; // canceled
-        const newSong = prompt("Edit Song/Video Link (optional):", pinData.songLink || "");
-        if (newSong === null) return; // canceled
-        // update DB
-        await update(pinRef, {
-          title: newTitle,
-          description: newDesc,
-          songLink: newSong
-        });
-        loadAllPins();
+    });
+
+    // Admin can add a brand new pin to "pins" root
+    document.getElementById("pinForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const lat = parseFloat(document.getElementById("latitude").value);
+      const lng = parseFloat(document.getElementById("longitude").value);
+      const description = document.getElementById("description").value.trim();
+      const pinsRef = ref(db, "pins");
+      const newPinRef = push(pinsRef);
+      const newPinData = {
+        title: "Untitled",
+        description: description,
+        geolocation: { lat, lng },
+        userId: currentUser.uid,
+        timestamp: Date.now()
+      };
+      await set(newPinRef, newPinData);
+      e.target.reset();
+      loadAllPins();
+    });
+
+    // Double-click on globe => add pin
+    let lastClickTime = 0;
+    const clickThreshold = 350;
+    earth.on("click", (event) => {
+      const now = Date.now();
+      if (now - lastClickTime < clickThreshold) {
+        // Double-click => open modal or handle pin creation
+        if (event.latlng) {
+          document.getElementById("latitude").value = event.latlng.lat.toFixed(5);
+          document.getElementById("longitude").value = event.latlng.lng.toFixed(5);
+          // Show your pin creation modal or form if desired
+          // For simplicity, let's just fill in the admin form
+        }
       }
+      lastClickTime = now;
     });
   </script>
 </body>
