@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login Page</title>
+  <title>Admin Login - CLU/Rinzler Theme</title>
   <!-- Orbitron Font & Bootstrap CSS -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
   <style>
-    /* Global Styles */
+    /* Global Styles: CLU/Rinzler Tron Theme */
     body {
       font-family: 'Orbitron', sans-serif;
-      background-color: #000; /* Dark background */
-      color: #00ffff; /* Neon cyan text */
+      background-color: #000; /* pitch black */
+      color: #ff3300;        /* bright Tron orange/red */
       padding-top: 60px;
     }
     /* Center the card vertically and horizontally */
@@ -22,53 +23,52 @@
       align-items: center;
       justify-content: center;
     }
-    /* Tron-inspired Card Style */
+    /* Card style in Tron orange */
     .card {
-      background: rgba(0, 31, 63, 0.85);
-      border: 1px solid #00ffff;
-      box-shadow: 0 0 15px #00ffff;
+      background: rgba(63, 0, 0, 0.85);
+      border: 1px solid #ff3300;     /* orange border */
+      box-shadow: 0 0 15px #ff3300;  /* glow effect */
       border-radius: 1rem;
-      color: #00ffff;
+      color: #ff3300;               /* text color inside the card */
     }
     .card-title {
       text-align: center;
       margin-bottom: 1rem;
-      text-shadow: 0 0 5px #00ffff;
+      text-shadow: 0 0 5px #ff3300; /* glow effect on card title */
     }
-    /* Form Controls */
+    /* Form Controls in Tron orange */
     .form-control {
-      background-color: #001f33;
-      border: 1px solid #00ffff;
-      color: #00ffff;
+      background-color: #330000; 
+      border: 1px solid #ff3300;
+      color: #ff3300;
       border-radius: 0.5rem;
     }
     .form-control:focus {
-      box-shadow: 0 0 5px #00ffff;
-      border-color: #00ffff;
-      color: #00ffff;
+      box-shadow: 0 0 5px #ff3300;
+      border-color: #ff3300;
+      color: #ff3300;
     }
-    /* Floating Labels */
     .form-floating label {
-      color: #00ffff;
+      color: #ff3300;
     }
-    /* Tron-inspired Primary Button */
+    /* Tron-inspired Primary Button (orange) */
     .btn-primary {
-      background-color: #00ffff;
-      border-color: #00ffff;
+      background-color: #ff3300; 
+      border-color: #ff3300;
       color: #000;
       font-weight: bold;
       border-radius: 0.5rem;
-      box-shadow: 0 0 8px #00ffff;
+      box-shadow: 0 0 8px #ff3300;
       transition: background-color 0.3s;
     }
     .btn-primary:hover {
-      background-color: #33ffff;
-      border-color: #33ffff;
+      background-color: #ff6600;
+      border-color: #ff6600;
     }
     /* Error Message Styling */
     #errorMsg {
       font-weight: bold;
-      text-shadow: 0 0 3px #00ffff;
+      text-shadow: 0 0 3px #ff3300;
     }
   </style>
 </head>
