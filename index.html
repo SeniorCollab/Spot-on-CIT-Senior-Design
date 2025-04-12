@@ -75,27 +75,43 @@
     .offcanvas-title {
       color: #00ffff;
     }
+    /* Nav-link styling for consistency */
     .offcanvas .nav-link {
       color: #00ffff;
       border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+      padding: 0.75rem 1rem;
     }
-    .offcanvas .nav-link:hover {
+    .offcanvas .nav-link:hover,
+    .offcanvas .nav-link.active {
       background-color: rgba(0, 31, 63, 0.5);
     }
-    /* Tron-style embedded media elements (iframe, video, audio) */
-    .pin-iframe,
-    .pin-video,
-    .pin-audio {
-      display: block;
-      margin-top: 0.5rem;
-      max-width: 100%;
+    /* Custom styling for the close button (X) */
+    .btn-close {
+      background-color: #00ffff;  /* neon cyan background */
       border: none;
-      box-shadow: 0 0 5px #00ffff;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      opacity: 1;
+      position: relative;
     }
-    .pin-iframe {
-      height: 150px;
+    .btn-close:before,
+    .btn-close:after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 16px;
+      height: 2px;
+      background-color: #000;  /* black X symbol */
     }
-    /* Tron-inspired form background */
+    .btn-close:before {
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+    .btn-close:after {
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+    /* Tron-style gradient form (for modals & forms) */
     .blue-gradient-form {
       background: rgba(0, 31, 63, 0.85);
       border: 1px solid #00ffff;
@@ -104,17 +120,38 @@
       padding: 1em;
       border-radius: 10px;
     }
+    /* Tron-style embedded media elements */
+    .pin-iframe,
+    .pin-video,
+    .pin-audio {
+      display: block;
+      margin-top: 8px;
+      max-width: 100%;
+      border: none;
+      box-shadow: 0 0 5px #00ffff;
+    }
+    .pin-iframe {
+      height: 150px;
+    }
+    .pin-image {
+      margin-top: 8px;
+      max-width: 100%;
+      height: auto;
+      border-radius: 5px;
+      border: 2px solid #00ffff;
+      box-shadow: 0 0 5px #00ffff;
+    }
   </style>
 </head>
 <body>
-  <!-- Video Background (local file) -->
+  <!-- Background Video -->
   <video autoplay muted loop id="bgvideo">
     <source src="stars.mp4" type="video/mp4">
   </video>
-  
-  <!-- Globe Background -->
+
+  <!-- WebGL Earth Container -->
   <div id="earth_div"></div>
-  
+
   <!-- Custom Hamburger Button (Offcanvas Toggle) -->
   <button class="hamburger-btn" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
     <div class="hamburger-icon">
@@ -123,21 +160,22 @@
       <span></span>
     </div>
   </button>
-  
+
   <!-- Offcanvas Sidebar for Navigation -->
-  <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+  <div class="offcanvas offcanvas-end" id="offcanvasNavbar" tabindex="-1" aria-labelledby="offcanvasNavbarLabel">
     <div class="offcanvas-header">
       <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Spot On</h5>
-      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">
       <nav class="navbar">
         <ul class="navbar-nav">
+          <!-- Apply same styling to Home button through active class -->
           <li class="nav-item"><a class="nav-link active" href="index.html">Home</a></li>
           <li class="nav-item"><a class="nav-link" href="pins.html">Pins</a></li>
           <li class="nav-item"><a class="nav-link" href="songs.html">Songs</a></li>
           <li class="nav-item"><a class="nav-link" href="events.html">Events</a></li>
-          <li class="nav-item"><a class="nav-link" href="shop.html">Store</a></li>
+          <li class="nav-item"><a class="nav-link" href="shop.html">My Store</a></li>
           <li class="nav-item"><a class="nav-link" href="user/userlogin.html">User</a></li>
           <li class="nav-item"><a class="nav-link" href="admin/adminlogin.html">Admin</a></li>
           <li class="nav-item"><a class="nav-link" href="register.html">Sign Up</a></li>
@@ -148,11 +186,11 @@
       <p>Create an account or login to start your journey</p>
     </div>
   </div>
-  
-  <!-- WebGL Earth + Bootstrap -->
+
+  <!-- WebGL Earth + Bootstrap JS -->
   <script src="https://www.webglearth.com/v2/api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-  
+
   <!-- Firebase SDK & Pin Loader -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
