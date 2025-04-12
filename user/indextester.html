@@ -168,7 +168,11 @@
           const m = WE.marker([pin.geolocation.lat, pin.geolocation.lng]).addTo(earth);
           let popup = `<strong>${pin.title}</strong><br>${pin.description}`;
           if (pin.songLink) popup += `<br><a href="${pin.songLink}" target="_blank">Song</a>`;
-          popup += `<br><button class="btn btn-sm btn-danger mt-2" onclick="deletePin('${type}','${id}')">Delete</button>`;
+          popup += `
+         <br>
+          <button class="btn btn-sm btn-primary mt-2 me-2" onclick="editPin('${type}','${id}')">Edit</button>
+          <button class="btn btn-sm btn-danger mt-2" onclick="deletePin('${type}','${id}')">Delete</button>
+          `;
           m.bindPopup(popup);
           markers[id] = m;
         });
@@ -194,6 +198,32 @@
       })
       .catch(err => alert("Could not delete pin: " + err.message));
   };
+
+  window.editPin = function (type, pinId) {
+  const pinPath = `pins/${currentUser.uid}/${type}/${pinId}`;
+  const pinRef = ref(db, pinPath);
+
+  onValue(pinRef, snapshot => {
+    const pin = snapshot.val();
+    if (!pin) return alert("Pin not found.");
+
+    const newTitle = prompt("Edit Title:", pin.title);
+    const newDesc = prompt("Edit Description:", pin.description);
+    if (!newTitle || !newDesc) return;
+
+    // Optional: edit songLink or other fields here
+
+    set(ref(db, pinPath), {
+      ...pin, // keep existing values (like lat/lng)
+      title: newTitle,
+      description: newDesc
+    });
+    alert("Pin updated! Please click outside and reopen the pin to see changes.");
+  }, {
+    onlyOnce: true
+  });
+};
+  
 </script>
 </body>
 </html>
