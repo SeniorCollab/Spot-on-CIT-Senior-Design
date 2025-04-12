@@ -50,7 +50,7 @@
       outline: none;
     }
 
-    /* === Added from the other file: Blue gradient and popup styling === */
+    /* === Blue gradient & popup styling === */
     .blue-gradient-form {
       background: linear-gradient(to bottom right, #cce5ff, #004085);
       color: white;
@@ -71,6 +71,32 @@
       height: 150px;
       border: none;
     }
+    .hamburger-btn {
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      z-index: 20;
+      position: fixed;
+      top: 20px;
+      right: 20px;
+    }
+    
+    .hamburger-icon {
+      width: 30px;
+      height: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    
+    .hamburger-icon span {
+      display: block;
+      height: 4px;
+      width: 100%;
+      background-color: #fff; /* change to match your theme */
+      border-radius: 2px;
+    }
   </style>
 </head>
 <body>
@@ -83,8 +109,12 @@
   <div id="earth_div"></div>
 
   <!-- Offcanvas Toggle Button (Hamburger Icon) -->
-  <button class="btn btn-primary" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
-    <span class="navbar-toggler-icon"></span>
+  <button class="hamburger-btn" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+    <div class="hamburger-icon">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
   </button>
 
   <!-- Offcanvas Sidebar for Navigation -->
@@ -112,7 +142,7 @@
     </div>
   </div>
 
-   <!-- WebGL Earth + Bootstrap -->
+  <!-- WebGL Earth + Bootstrap -->
   <script src="https://www.webglearth.com/v2/api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -142,20 +172,7 @@
       subdomains: 'abc'
     }).addTo(earth);
 
-    // 2) Double-click detection (like in the other file)
-    let lastClickTime = 0;
-    const clickThreshold = 350; // ms
-
-    earth.on('click', event => {
-      const now = Date.now();
-      if (now - lastClickTime < clickThreshold) {
-        // It's a double-click; you could do something here
-        alert('Double-click detected at: ' + event.latlng.lat + ', ' + event.latlng.lng);
-      }
-      lastClickTime = now;
-    });
-
-    // 3) Utility to generate embed if the pin has a "songLink"
+    // 2) Utility to generate embed if the pin has a "songLink"
     function generateEmbedContent(link) {
       if (!link) return "";
 
@@ -179,7 +196,7 @@
       return `<iframe class="pin-iframe" src="${link}" allowfullscreen></iframe>`;
     }
 
-    // 4) Add pins from Firebase
+    // 3) Add pins from Firebase to the globe
     function addPin(lat, lng, title, description, songLink = "") {
       const marker = WE.marker([lat, lng]).addTo(earth);
 
@@ -194,6 +211,7 @@
 
       content += `</div>`;
 
+      // Single-click on the marker opens this popup
       marker.bindPopup(content);
     }
 
