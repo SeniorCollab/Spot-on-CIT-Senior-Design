@@ -5,14 +5,21 @@
   <title>Interactive Map with Editable Pins</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Tron-like font from Google Fonts (Orbitron) -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap">
   <style>
+    /* Global Styles */
     html, body {
       margin: 0;
       padding: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
+      /* No background color so video remains visible */
+      font-family: 'Orbitron', sans-serif;
+      color: #00ffff;  /* neon cyan as base text color */
     }
+    /* Video Background */
     #bgvideo {
       position: fixed;
       top: 0;
@@ -21,8 +28,9 @@
       min-height: 100%;
       z-index: -2;
       object-fit: cover;
+      opacity: 1;  /* fully visible video */
     }
-    /* Globe fills the background */
+    /* Globe Container (WebGL Earth) */
     #earth_div {
       position: fixed;
       top: 0;
@@ -31,13 +39,17 @@
       height: 100%;
       z-index: 0;
     }
-    /* Offcanvas toggle button styling */
+    /* Offcanvas Toggle Button styling */
     #offcanvasToggle {
       position: fixed;
       top: 20px;
       right: 20px;
       z-index: 20;
+      background: transparent;
+      border: none;
+      outline: none;
     }
+    /* Optional custom toggle style */
     .custom-toggle-btn {
       background: transparent;
       border: none;
@@ -48,27 +60,42 @@
       box-shadow: none;
       outline: none;
     }
-
-    /* Optional: style for embedded iframes, videos, etc. */
+    /* Tron-inspired Offcanvas Sidebar */
+    .offcanvas {
+      background-color: rgba(0, 0, 0, 0.95);
+      border-left: 2px solid #00ffff;
+    }
+    .offcanvas-header,
+    .offcanvas-body,
+    .offcanvas-title {
+      color: #00ffff;
+    }
+    .offcanvas .nav-link {
+      color: #00ffff;
+      border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    }
+    .offcanvas .nav-link:hover {
+      background-color: rgba(0, 31, 63, 0.5);
+    }
+    /* Tron-style embedded media elements (iframe, video, audio) */
     .pin-iframe,
     .pin-video,
     .pin-audio {
       display: block;
       margin-top: 0.5rem;
       max-width: 100%;
+      border: none;
+      box-shadow: 0 0 5px #00ffff;
     }
     .pin-iframe {
       height: 150px;
-      border: none;
     }
-
-    /*
-      Reused from original for a form background gradient.
-      You can apply this class to any <form> or container if needed.
-    */
+    /* Tron-inspired form background (replacing the previous gradient) */
     .blue-gradient-form {
-      background: linear-gradient(to bottom right, #cce5ff, #004085);
-      color: white;
+      background: rgba(0, 31, 63, 0.85);
+      border: 1px solid #00ffff;
+      box-shadow: 0 0 10px #00ffff;
+      color: #00ffff;
       padding: 1em;
       border-radius: 10px;
     }
@@ -81,12 +108,12 @@
   </video>
   <!-- Globe Background -->
   <div id="earth_div"></div>
-
+  
   <!-- Offcanvas Toggle Button (Hamburger Icon) -->
   <button class="btn btn-primary" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
     <span class="navbar-toggler-icon"></span>
   </button>
-
+  
   <!-- Offcanvas Sidebar for Navigation -->
   <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
     <div class="offcanvas-header">
@@ -111,11 +138,11 @@
       <p>Create an account or login to start your journey</p>
     </div>
   </div>
-
-   <!-- WebGL Earth + Bootstrap -->
+  
+  <!-- WebGL Earth + Bootstrap JS -->
   <script src="https://www.webglearth.com/v2/api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-
+  
   <!-- Firebase SDK & Pin Loader -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
@@ -148,7 +175,6 @@
     */
     function generateEmbedContent(link) {
       if (!link) return "";
-
       // Spotify track
       if (link.includes("open.spotify.com/track/")) {
         const embedUrl = link.replace("open.spotify.com/track/", "open.spotify.com/embed/track/");
@@ -174,16 +200,16 @@
       if (link.endsWith(".mp3")) {
         return `<audio class="pin-audio" src="${link}" controls></audio>`;
       }
-      // Fallback: just an iframe
+      // Fallback (iframe)
       return `<iframe class="pin-iframe" src="${link}" allowfullscreen></iframe>`;
     }
-
+    
     /*
       Create a marker on the globe and bind a popup that displays:
       - Title
       - Description
       - Embedded media (if any)
-      - Likes/Dislikes (read-only)
+      - Read-only likes/dislikes
     */
     function addPin(lat, lng, pinData) {
       const marker = WE.marker([lat, lng]).addTo(earth);
@@ -192,13 +218,11 @@
         <strong>${pinData.title || "Untitled"}</strong><br>
         ${pinData.description || ""}
       `;
-
-      // If there's a media link
+      // Embedded media (if provided)
       if (pinData.songLink) {
         content += `<br>${generateEmbedContent(pinData.songLink)}`;
       }
-
-      // If there's an image
+      // Show image if provided
       if (pinData.imageUrl) {
         content += `
           <br>
@@ -207,25 +231,20 @@
                style="max-width:100%; border-radius:4px; margin-top:0.5rem;">
         `;
       }
-
-      // Show read-only likes/dislikes
+      // Read-only display for likes/dislikes
       const likeCount = pinData.likes || 0;
       const dislikeCount = pinData.dislikes || 0;
       content += `<br><small>Likes: ${likeCount} | Dislikes: ${dislikeCount}</small>`;
 
       marker.bindPopup(content);
     }
-
-    // Load pins from Firebase
+    
+    // Load pins from Firebase and display on the globe
     function loadPinsFromFirebase() {
       const pinsRef = ref(db, "pins");
-
       onValue(pinsRef, snapshot => {
         const allUserPins = snapshot.val();
         if (!allUserPins) return;
-
-        // (Optional) Clear existing markers if needed
-
         // Each user object has eventPins, moodPins, shopPins
         Object.values(allUserPins).forEach(userPins => {
           ["eventPins", "moodPins", "shopPins"].forEach(pinType => {
@@ -241,7 +260,7 @@
         });
       });
     }
-
+    
     loadPinsFromFirebase();
   </script>
 </body>
