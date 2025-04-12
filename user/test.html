@@ -121,6 +121,10 @@
         Show My Pins Only
       </button>
 
+      <button class="btn btn-danger w-100 mt-3" id="logoutBtn">
+        Log Out
+      </button>
+
       <h6 class="mt-4">Search Pins</h6>
       <form id="searchForm">
         <input type="text" class="form-control mb-2" id="searchInput" placeholder="Search by description">
@@ -249,7 +253,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import { getDatabase, ref, push, set, onValue, get, update, remove } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
@@ -268,13 +272,10 @@
     let currentUser = null;
     let eventImageUrl = "";
     let shopImageUrl = "";
-    let showOnlyMyPins = false; // toggles filtering
+    let showOnlyMyPins = false;
     const modal = new bootstrap.Modal(document.getElementById("pinModal"));
 
-    // We'll store references to each marker so we can remove them when reloading
     let markersList = [];
-
-    // For editing pins
     let editingPinId = null;
     let editingPinType = null;
 
@@ -319,7 +320,6 @@
         // Indicate new pin creation
         editingPinId = null;
         editingPinType = null;
-
         modal.show();
       }
     }
@@ -332,19 +332,31 @@
       loadPinsFromFirebase(); // reload with filter
     });
 
+    // Logout button
+    const logoutBtn = document.getElementById("logoutBtn");
+    logoutBtn.addEventListener("click", () => {
+      signOut(auth)
+        .then(() => {
+          // Signed out successfully
+          window.location.href = "index.html";
+        })
+        .catch(err => {
+          console.error("Sign-out error:", err);
+          alert("Could not sign out. See console.");
+        });
+    });
+
     /* ------------------------------------------------------------------
-       1. Load existing pins from Firebase
-          If "showOnlyMyPins" is true, only load pins/<currentUser.uid>
-          otherwise load all pins
+       Load existing pins from Firebase
     ------------------------------------------------------------------ */
     function loadPinsFromFirebase() {
-      // Remove existing markers from the globe
+      // Remove existing markers
       markersList.forEach(m => m.removeFrom(earth));
       markersList = [];
 
       const path = showOnlyMyPins ? `pins/${currentUser.uid}` : "pins";
       onValue(ref(db, path), snapshot => {
-        // Once data arrives, clear old markers again (in case multiple updates in real-time)
+        // Clear out old markers again on each update
         markersList.forEach(m => m.removeFrom(earth));
         markersList = [];
 
@@ -371,7 +383,6 @@
         // For each pin
         Object.entries(group).forEach(([pinId, pin]) => {
           if (pin.geolocation) {
-            // Create the marker & store reference
             const marker = addPin(
               pin.geolocation.lat,
               pin.geolocation.lng,
@@ -387,8 +398,7 @@
     }
 
     /* ------------------------------------------------------------------
-       2. Convert user link to an embeddable snippet
-          (Spotify, YouTube, .mp4, .mp3, or fallback iframe)
+       Convert user link to an embeddable snippet
     ------------------------------------------------------------------ */
     function generateEmbedContent(link) {
       if (!link) return "";
@@ -421,8 +431,7 @@
     }
 
     /* ------------------------------------------------------------------
-       3. Create a marker + popup (including Edit/Delete if user is owner)
-          Return the created marker so we can store it
+       Create a marker + popup (including Edit/Delete if user is owner)
     ------------------------------------------------------------------ */
     function addPin(lat, lng, pinData, userId, pinId, pinType) {
       const marker = WE.marker([lat, lng]).addTo(earth);
@@ -445,10 +454,9 @@
         content += `<br><img class="pin-image" src="${pinData.imageUrl}" alt="Pin Image">`;
       }
 
-      // Like / Dislike
+      // Likes / Dislikes
       const likesCount = pinData.likes || 0;
       const dislikesCount = pinData.dislikes || 0;
-
       content += `
         <br>
         <button class="like-button btn btn-outline-light btn-sm"
@@ -488,26 +496,22 @@
       content += `</div>`;
 
       marker.bindPopup(content);
-
       return marker;
     }
 
     /* ------------------------------------------------------------------
-       4. Global click listener for Like, Dislike, Edit, Delete
+       Global click listener for Like, Dislike, Edit, Delete
     ------------------------------------------------------------------ */
     document.addEventListener("click", async e => {
       if (e.target.classList.contains("like-button")) {
-        // LIKE
         const { userId, pinType, pinId } = getPinIdentifiers(e.target);
         await incrementFieldInPin(userId, pinType, pinId, "likes");
       }
       else if (e.target.classList.contains("dislike-button")) {
-        // DISLIKE
         const { userId, pinType, pinId } = getPinIdentifiers(e.target);
         await incrementFieldInPin(userId, pinType, pinId, "dislikes");
       }
       else if (e.target.classList.contains("delete-button")) {
-        // DELETE
         const { userId, pinType, pinId } = getPinIdentifiers(e.target);
         if (userId === currentUser.uid) {
           if (confirm("Are you sure you want to delete this pin?")) {
@@ -516,7 +520,6 @@
         }
       }
       else if (e.target.classList.contains("edit-button")) {
-        // EDIT
         const { userId, pinType, pinId } = getPinIdentifiers(e.target);
         if (userId === currentUser.uid) {
           await editPin(userId, pinType, pinId);
@@ -543,7 +546,7 @@
     }
 
     /* ------------------------------------------------------------------
-       5. Delete Pin
+       Delete Pin
     ------------------------------------------------------------------ */
     async function deletePin(userId, pinType, pinId) {
       const pinRef = ref(db, `pins/${userId}/${pinType}/${pinId}`);
@@ -552,10 +555,7 @@
     }
 
     /* ------------------------------------------------------------------
-       6. Edit Pin
-          - We fetch the pin's data and open the relevant modal form
-          - Pre-fill form fields
-          - On save, we call updatePin(...) instead of creating a new one
+       Edit Pin
     ------------------------------------------------------------------ */
     async function editPin(userId, pinType, pinId) {
       const pinRef = ref(db, `pins/${userId}/${pinType}/${pinId}`);
@@ -606,7 +606,7 @@
     }
 
     /* ------------------------------------------------------------------
-       7. Cloudinary Upload Handlers
+       Cloudinary Upload Handlers
     ------------------------------------------------------------------ */
     function openCloudinary(callback) {
       cloudinary.createUploadWidget({
@@ -634,8 +634,7 @@
     });
 
     /* ------------------------------------------------------------------
-       8. Form Submissions for Each Pin Type
-          If editingPinId is set, we update. Otherwise, we create new.
+       Form Submissions for Each Pin Type
     ------------------------------------------------------------------ */
     document.getElementById("simpleModalForm").addEventListener("submit", async e => {
       e.preventDefault();
@@ -713,7 +712,7 @@
     });
 
     /* ------------------------------------------------------------------
-       9. Create New Pin Functions (include likes=0, dislikes=0)
+       Create New Pin Functions (include likes=0, dislikes=0)
     ------------------------------------------------------------------ */
     function saveEventPin(lat, lng, title, desc, imageUrl = "", songLink = "") {
       const refPath = ref(db, `pins/${currentUser.uid}/eventPins`);
@@ -758,7 +757,7 @@
     }
 
     /* ------------------------------------------------------------------
-       10. Modal Navigation
+       Modal Navigation
     ------------------------------------------------------------------ */
     document.getElementById("modalBtnSimple").onclick = () => {
       hideForms();
