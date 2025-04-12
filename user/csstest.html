@@ -36,6 +36,32 @@
       right: 20px;
       z-index: 20;
     }
+    .hamburger-btn {
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      z-index: 20;
+      position: fixed;
+      top: 20px;
+      right: 20px;
+    }
+    
+    .hamburger-icon {
+      width: 30px;
+      height: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    
+    .hamburger-icon span {
+      display: block;
+      height: 4px;
+      width: 100%;
+      background-color: #fff; /* change to match your theme */
+      border-radius: 2px;
+    }
   </style>
 </head>
 <body>
@@ -46,8 +72,12 @@
   <div id="earth_div"></div>
 
   <!-- Hamburger Button -->
-  <button class="btn btn-primary" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
-    <i class="bi bi-list fs-3"></i>
+  <button class="hamburger-btn" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+    <div class="hamburger-icon">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
   </button>
 
   <!-- Sidebar -->
