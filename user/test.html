@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8">
   <title>Interactive Map with Editable Pins</title>
+  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-  <!-- Cloudinary Upload Widget -->
-  <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 
   <style>
     html, body {
@@ -25,6 +23,7 @@
       z-index: -2;
       object-fit: cover;
     }
+    /* Globe fills the background */
     #earth_div {
       position: fixed;
       top: 0;
@@ -33,22 +32,31 @@
       height: 100%;
       z-index: 0;
     }
+    /* Offcanvas toggle button styling */
     #offcanvasToggle {
       position: fixed;
       top: 20px;
       right: 20px;
       z-index: 20;
     }
+    .custom-toggle-btn {
+      background: transparent;
+      border: none;
+      padding: 0.5rem;
+      z-index: 20;
+    }
+    .custom-toggle-btn:focus {
+      box-shadow: none;
+      outline: none;
+    }
 
-    /* ----- Gradient Form/Popup Style ----- */
+    /* === Added from the other file: Blue gradient and popup styling === */
     .blue-gradient-form {
       background: linear-gradient(to bottom right, #cce5ff, #004085);
       color: white;
       padding: 1em;
       border-radius: 10px;
     }
-
-    /* Popup content styling for each marker */
     .pin-popup-content {
       background: linear-gradient(to bottom right, #cce5ff, #004085);
       color: white;
@@ -56,78 +64,34 @@
       border-radius: 10px;
       max-width: 300px;
     }
-
-    /* Optional: style the like button or the iframe as desired */
-    .like-button {
-      margin-top: 8px;
-    }
-    .pin-iframe, .pin-video, .pin-audio {
+    .pin-iframe {
       display: block;
       margin-top: 8px;
-      /* Adjust sizing as desired */
-      max-width: 100%;
-    }
-    .pin-iframe {
+      width: 100%;
       height: 150px;
       border: none;
-    }
-    .pin-image {
-      margin-top: 8px;
-      max-width: 100%;
-      height: auto;
-      border-radius: 5px;
-    }
-    .hamburger-btn {
-      background: none;
-      border: none;
-      padding: 0;
-      cursor: pointer;
-      z-index: 20;
-      position: fixed;
-      top: 20px;
-      right: 20px;
-    }
-    
-    .hamburger-icon {
-      width: 30px;
-      height: 22px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    
-    .hamburger-icon span {
-      display: block;
-      height: 4px;
-      width: 100%;
-      background-color: #fff; /* change to match your theme */
-      border-radius: 2px;
     }
   </style>
 </head>
 <body>
-  <!-- Background Video -->
+  <!-- Video Background (local file) -->
   <video autoplay muted loop id="bgvideo">
     <source src="stars.mp4" type="video/mp4">
   </video>
 
-  <!-- WebGL Earth Container -->
+  <!-- Globe Background -->
   <div id="earth_div"></div>
 
-  <!-- Offcanvas Toggle (hamburger) -->
-  <button class="hamburger-btn" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
-    <div class="hamburger-icon">
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
+  <!-- Offcanvas Toggle Button (Hamburger Icon) -->
+  <button class="btn btn-primary" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+    <span class="navbar-toggler-icon"></span>
   </button>
 
-  <!-- Sidebar / Offcanvas -->
-  <div class="offcanvas offcanvas-end" id="offcanvasNavbar" tabindex="-1">
+  <!-- Offcanvas Sidebar for Navigation -->
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
     <div class="offcanvas-header">
-      <h5 class="offcanvas-title">Spot On</h5>
-      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+      <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Spot On</h5>
+      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">
       <nav class="navbar">
@@ -136,143 +100,27 @@
           <li class="nav-item"><a class="nav-link" href="pins.html">Pins</a></li>
           <li class="nav-item"><a class="nav-link" href="songs.html">Songs</a></li>
           <li class="nav-item"><a class="nav-link" href="events.html">Events</a></li>
-          <li class="nav-item"><a class="nav-link" href="shop.html">My Store</a></li>
-          <li class="nav-item"><a class="nav-link" href="indextester.html">Indextester (Beta Globe)</a></li>
+          <li class="nav-item"><a class="nav-link" href="shop.html">Store</a></li>
+          <li class="nav-item"><a class="nav-link" href="user/userlogin.html">User</a></li>
+          <li class="nav-item"><a class="nav-link" href="admin/adminlogin.html">Admin</a></li>
+          <li class="nav-item"><a class="nav-link" href="register.html">Sign Up</a></li>
+          <li class="nav-item"><a class="nav-link" href="user/test.html">Test</a></li>
+          <li class="nav-item"><a class="nav-link" href="user/csstest.html">Css Test</a></li>
         </ul>
       </nav>
-
-      <h6 class="mt-4">Search Pins</h6>
-      <form id="searchForm">
-        <input type="text" class="form-control mb-2" id="searchInput" placeholder="Search by description">
-        <button type="submit" class="btn btn-primary w-100">Search</button>
-      </form>
-
-      <!-- Simple offcanvas form (optional) -->
-      <h6 class="mt-4">Add a New Pin</h6>
-      <form id="pinForm" class="blue-gradient-form">
-        <div class="mb-2">
-          <label for="latitude" class="form-label">Latitude</label>
-          <input type="number" class="form-control" id="latitude" required>
-        </div>
-        <div class="mb-2">
-          <label for="longitude" class="form-label">Longitude</label>
-          <input type="number" class="form-control" id="longitude" required>
-        </div>
-        <div class="mb-2">
-          <label for="description" class="form-label">Description</label>
-          <input type="text" class="form-control" id="description" required>
-        </div>
-        <button type="submit" class="btn btn-success w-100">Add Pin</button>
-      </form>
+      <p>Create an account or login to start your journey</p>
     </div>
   </div>
 
-  <!-- Main Modal for Pin Creation -->
-  <div class="modal fade" id="pinModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Add Pin</h5>
-          <button class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-
-          <div id="modalChoice" class="text-center">
-            <p>Select Pin Type:</p>
-            <button class="btn btn-outline-primary mb-2" id="modalBtnSimple">Pin Event</button>
-            <button class="btn btn-outline-secondary mb-2" id="modalBtnDetailed">Pin Mood</button>
-            <button class="btn btn-outline-success mb-2" id="modalBtnShop">Pin Shop Item</button>
-          </div>
-
-          <!-- Event Pin Form -->
-          <form id="simpleModalForm" class="d-none blue-gradient-form">
-            <label for="modalTitleSimple" class="form-label">Title</label>
-            <input type="text" class="form-control mb-2" id="modalTitleSimple" required>
-
-            <label for="modalDescSimple" class="form-label">Description</label>
-            <input type="text" class="form-control mb-2" id="modalDescSimple" required>
-
-            <!-- New: Song/Audio link for event pins -->
-            <label for="modalSongEvt" class="form-label">Song/Audio/Video Link (Optional)</label>
-            <input type="url" class="form-control mb-2" id="modalSongEvt" placeholder="https://...">
-
-            <button type="button" class="btn btn-outline-secondary mb-2" id="uploadEventBtn">Upload Event Image</button>
-            <input type="hidden" id="modalImageSimple">
-
-            <label for="modalLatSimple" class="form-label">Latitude</label>
-            <input type="number" class="form-control mb-2" id="modalLatSimple" readonly>
-
-            <label for="modalLngSimple" class="form-label">Longitude</label>
-            <input type="number" class="form-control mb-2" id="modalLngSimple" readonly>
-
-            <button type="submit" class="btn btn-primary w-100">Save Event Pin</button>
-            <button type="button" class="btn btn-link mt-2" id="backFromSimpleModal">← Back</button>
-          </form>
-
-          <!-- Mood Pin Form -->
-          <form id="detailedModalForm" class="d-none blue-gradient-form">
-            <label for="modalTitleDet" class="form-label">Title</label>
-            <input type="text" class="form-control mb-2" id="modalTitleDet" required>
-            
-            <label for="modalDescDet" class="form-label">Description</label>
-            <textarea class="form-control mb-2" id="modalDescDet" rows="2" required></textarea>
-            
-            <label for="modalSongDet" class="form-label">Song/Video Link (Optional)</label>
-            <input type="url" class="form-control mb-2" id="modalSongDet" placeholder="https://...">
-
-            <label for="modalLatDet" class="form-label">Latitude</label>
-            <input type="number" class="form-control mb-2" id="modalLatDet" readonly>
-
-            <label for="modalLngDet" class="form-label">Longitude</label>
-            <input type="number" class="form-control mb-2" id="modalLngDet" readonly>
-
-            <button type="submit" class="btn btn-primary w-100">Save Mood Pin</button>
-            <button type="button" class="btn btn-link mt-2" id="backFromDetailedModal">← Back</button>
-          </form>
-
-          <!-- Shop Pin Form -->
-          <form id="shopModalForm" class="d-none blue-gradient-form">
-            <label for="modalTitleShop" class="form-label">Title</label>
-            <input type="text" class="form-control mb-2" id="modalTitleShop" required>
-            
-            <label for="modalDescShop" class="form-label">Description</label>
-            <textarea class="form-control mb-2" id="modalDescShop" rows="2" required></textarea>
-            
-            <button type="button" class="btn btn-outline-secondary mb-2" id="uploadShopBtn">Upload Shop Image</button>
-            <input type="hidden" id="modalImageShop">
-            
-            <label for="modalNumberShop" class="form-label">Quantity</label>
-            <input type="number" class="form-control mb-2" id="modalNumberShop" placeholder="Quantity" required>
-            
-            <label for="modalLinkShop" class="form-label">Link</label>
-            <input type="url" class="form-control mb-2" id="modalLinkShop" placeholder="Link" required>
-            
-            <label for="modalLatShop" class="form-label">Latitude</label>
-            <input type="number" class="form-control mb-2" id="modalLatShop" readonly>
-            
-            <label for="modalLngShop" class="form-label">Longitude</label>
-            <input type="number" class="form-control mb-2" id="modalLngShop" readonly>
-
-            <button type="submit" class="btn btn-success w-100">Save Shop Item</button>
-            <button type="button" class="btn btn-link mt-2" id="backFromShopModal">← Back</button>
-          </form>
-
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- WebGL Earth & Bootstrap JS -->
+   <!-- WebGL Earth + Bootstrap -->
   <script src="https://www.webglearth.com/v2/api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Firebase v10+ -->
+  <!-- Firebase SDK & Pin Loader -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getDatabase, ref, push, set, onValue, get, update } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
-    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
       authDomain: "spoton-cit481.firebaseapp.com",
@@ -285,349 +133,100 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const auth = getAuth(app);
 
-    let currentUser = null;
-    let eventImageUrl = "";
-    let shopImageUrl = "";
-    const modal = new bootstrap.Modal(document.getElementById("pinModal"));
-
-    // Auth check
-    onAuthStateChanged(auth, user => {
-      if (!user) {
-        window.location.href = "user/userlogin.html";
-        return;
-      }
-      currentUser = user;
-      loadPinsFromFirebase();
-    });
-
-    // Create the globe
-    const earth = new WE.map("earth_div");
+    // 1) Create globe
+    const earth = new WE.map('earth_div');
     earth.setView([0, 0], 2);
-    WE.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap contributors",
-      subdomains: "abc"
+    WE.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      subdomains: 'abc'
     }).addTo(earth);
 
-    /* ------------------------------------------------------------------
-       1. "Double-click" detection logic
-          (time two successive 'click' events)
-    ------------------------------------------------------------------ */
+    // 2) Double-click detection (like in the other file)
     let lastClickTime = 0;
     const clickThreshold = 350; // ms
 
-    earth.on("click", event => {
+    earth.on('click', event => {
       const now = Date.now();
       if (now - lastClickTime < clickThreshold) {
-        // It's a double-click
-        handleDoubleClick(event);
+        // It's a double-click; you could do something here
+        alert('Double-click detected at: ' + event.latlng.lat + ', ' + event.latlng.lng);
       }
       lastClickTime = now;
     });
 
-    function handleDoubleClick(event) {
-      if (event.latlng) {
-        const { lat, lng } = event.latlng;
-        // Prefill all forms' lat/lng
-        ["Simple", "Det", "Shop"].forEach(type => {
-          document.getElementById(`modalLat${type}`).value = lat.toFixed(5);
-          document.getElementById(`modalLng${type}`).value = lng.toFixed(5);
-        });
-        modal.show();
-      }
-    }
-
-    /* ------------------------------------------------------------------
-       2. Load existing pins from Firebase
-    ------------------------------------------------------------------ */
-    function loadPinsFromFirebase() {
-      onValue(ref(db, "pins"), snapshot => {
-        const allPins = snapshot.val();
-        if (!allPins) return;
-
-        // For each user
-        Object.entries(allPins).forEach(([userId, userData]) => {
-          // For each pin type: eventPins, moodPins, shopPins
-          ["eventPins", "moodPins", "shopPins"].forEach(pinType => {
-            const group = userData[pinType];
-            if (!group) return;
-
-            // For each pin
-            Object.entries(group).forEach(([pinId, pin]) => {
-              if (pin.geolocation) {
-                addPin(
-                  pin.geolocation.lat,
-                  pin.geolocation.lng,
-                  pin,
-                  userId,
-                  pinId,
-                  pinType
-                );
-              }
-            });
-          });
-        });
-      });
-    }
-
-    /* ------------------------------------------------------------------
-       3. Convert user link to an embeddable snippet
-          (Spotify, YouTube, .mp4, .mp3, or fallback iframe)
-    ------------------------------------------------------------------ */
+    // 3) Utility to generate embed if the pin has a "songLink"
     function generateEmbedContent(link) {
       if (!link) return "";
 
-      // Spotify link
+      // If you want to support specific providers (Spotify/YouTube) or file types, expand this logic:
       if (link.includes("open.spotify.com/track/")) {
-        // transform to embed link
         const embedUrl = link.replace("open.spotify.com/track/", "open.spotify.com/embed/track/");
         return `<iframe class="pin-iframe" src="${embedUrl}" allow="encrypted-media" allowfullscreen></iframe>`;
       }
-
-      // YouTube link
       if (link.includes("youtube.com/watch?v=") || link.includes("youtu.be/")) {
-        // Attempt to parse the video ID and create an embed
         let videoId = "";
         if (link.includes("watch?v=")) {
           videoId = link.split("watch?v=")[1];
-          // in case there's a "&" in the query, take only until that
           if (videoId.includes("&")) videoId = videoId.split("&")[0];
         } else {
-          // youtu.be short link
           videoId = link.split("youtu.be/")[1];
         }
         const embedUrl = `https://www.youtube.com/embed/${videoId}`;
         return `<iframe class="pin-iframe" src="${embedUrl}" allowfullscreen></iframe>`;
       }
-
-      // If it's an mp4 or mp3 file:
-      if (link.endsWith(".mp4")) {
-        return `<video class="pin-video" src="${link}" controls></video>`;
-      }
-      if (link.endsWith(".mp3")) {
-        return `<audio class="pin-audio" src="${link}" controls></audio>`;
-      }
-
-      // Generic fallback: just load it as an iframe
+      // fallback
       return `<iframe class="pin-iframe" src="${link}" allowfullscreen></iframe>`;
     }
 
-    /* ------------------------------------------------------------------
-       4. Create a marker + popup (displaying images, embedded media, etc.)
-    ------------------------------------------------------------------ */
-    function addPin(lat, lng, pinData, userId, pinId, pinType) {
+    // 4) Add pins from Firebase
+    function addPin(lat, lng, title, description, songLink = "") {
       const marker = WE.marker([lat, lng]).addTo(earth);
 
-      let content = `<div class="pin-popup-content">`;
+      // Wrap popup content in .pin-popup-content to get the gradient background
+      let content = `<div class="pin-popup-content">
+        <strong>${title || "Untitled"}</strong><br>${description || ""}`;
 
-      // Title/description
-      content += `
-        <strong>Title:</strong> ${pinData.title || "Untitled"}<br>
-        <strong>Description:</strong> ${pinData.description || ""}
-      `;
-
-      // If there's a link (song/video), embed it
-      if (pinData.songLink) {
-        content += "<br>" + generateEmbedContent(pinData.songLink);
+      // If there's a link, embed it in an iframe
+      if (songLink) {
+        content += "<br>" + generateEmbedContent(songLink);
       }
 
-      // If there's an image, display it
-      if (pinData.imageUrl) {
-        content += `<br><img class="pin-image" src="${pinData.imageUrl}" alt="Pin Image">`;
-      }
-
-      // Like button
-      const likesCount = pinData.likes || 0;
-      content += `
-        <br>
-        <button class="like-button btn btn-outline-light btn-sm mt-2"
-                data-user-id="${userId}"
-                data-pin-type="${pinType}"
-                data-pin-id="${pinId}">
-          Like (${likesCount})
-        </button>
-      `;
-
-      content += `</div>`; // close .pin-popup-content
+      content += `</div>`;
 
       marker.bindPopup(content);
     }
 
-    /* ------------------------------------------------------------------
-       5. Global listener for like-button clicks
-    ------------------------------------------------------------------ */
-    document.addEventListener("click", async e => {
-      if (e.target.classList.contains("like-button")) {
-        const userId = e.target.getAttribute("data-user-id");
-        const pinType = e.target.getAttribute("data-pin-type");
-        const pinId = e.target.getAttribute("data-pin-id");
-        const pinRef = ref(db, `pins/${userId}/${pinType}/${pinId}`);
+    function loadPinsFromFirebase() {
+      const pinsRef = ref(db, "pins");
 
-        // Get the current pin data
-        const snapshot = await get(pinRef);
-        if (snapshot.exists()) {
-          const pinData = snapshot.val();
-          const currentLikes = pinData.likes || 0;
-          const newLikes = currentLikes + 1;
-          // Increment likes by 1 in Firebase
-          await update(pinRef, { likes: newLikes });
+      onValue(pinsRef, snapshot => {
+        const allUserPins = snapshot.val();
+        if (!allUserPins) return;
 
-          // Immediately update the button text so user sees the change
-          e.target.textContent = `Like (${newLikes})`;
-        }
-      }
-    });
-
-    /* ------------------------------------------------------------------
-       6. Saving pins to Firebase with a default 'likes: 0' field
-    ------------------------------------------------------------------ */
-    function saveEventPin(lat, lng, title, desc, imageUrl = "", songLink = "") {
-      const refPath = ref(db, `pins/${currentUser.uid}/eventPins`);
-      return set(push(refPath), {
-        title,
-        description: desc,
-        imageUrl,
-        songLink,
-        likes: 0, // Initialize likes
-        geolocation: { lat, lng },
-        timestamp: Date.now()
-      });
-    }
-
-    function saveMoodPin(lat, lng, title, desc, songLink = "") {
-      const refPath = ref(db, `pins/${currentUser.uid}/moodPins`);
-      return set(push(refPath), {
-        title,
-        description: desc,
-        songLink,
-        likes: 0, // Initialize likes
-        geolocation: { lat, lng },
-        timestamp: Date.now()
-      });
-    }
-
-    function saveShopPin(lat, lng, title, desc, imageUrl = "", quantity, link) {
-      const refPath = ref(db, `pins/${currentUser.uid}/shopPins`);
-      return set(push(refPath), {
-        title,
-        description: desc,
-        imageUrl,
-        quantity,
-        link,
-        likes: 0, // Initialize likes, if you want to like shop items
-        geolocation: { lat, lng },
-        timestamp: Date.now()
-      });
-    }
-
-    /* ------------------------------------------------------------------
-       7. Cloudinary Upload Handlers
-    ------------------------------------------------------------------ */
-    function openCloudinary(callback) {
-      cloudinary.createUploadWidget({
-        cloudName: "djhoct1eh",  // your Cloudinary cloud name
-        uploadPreset: "ml_default"
-      }, (err, result) => {
-        if (!err && result && result.event === "success") {
-          callback(result.info.secure_url);
-        }
-      }).open();
-    }
-
-    document.getElementById("uploadEventBtn").addEventListener("click", () => {
-      openCloudinary(url => {
-        eventImageUrl = url;
-        alert("Event image uploaded");
-      });
-    });
-
-    document.getElementById("uploadShopBtn").addEventListener("click", () => {
-      openCloudinary(url => {
-        shopImageUrl = url;
-        alert("Shop image uploaded");
-      });
-    });
-
-    /* ------------------------------------------------------------------
-       8. Form Submissions for Each Pin Type
-    ------------------------------------------------------------------ */
-    // EVENT PIN
-    document.getElementById("simpleModalForm").addEventListener("submit", e => {
-      e.preventDefault();
-      const lat = parseFloat(document.getElementById("modalLatSimple").value);
-      const lng = parseFloat(document.getElementById("modalLngSimple").value);
-      const title = document.getElementById("modalTitleSimple").value;
-      const desc = document.getElementById("modalDescSimple").value;
-      const songLink = document.getElementById("modalSongEvt").value;
-
-      saveEventPin(lat, lng, title, desc, eventImageUrl, songLink)
-        .then(() => {
-          // Reset image url for next usage
-          eventImageUrl = "";
-          modal.hide();
+        Object.values(allUserPins).forEach(userPins => {
+          ["eventPins", "moodPins", "shopPins"].forEach(type => {
+            const pinGroup = userPins[type];
+            if (pinGroup) {
+              Object.values(pinGroup).forEach(pin => {
+                const { title, description, songLink, geolocation } = pin;
+                if (geolocation) {
+                  addPin(
+                    geolocation.lat,
+                    geolocation.lng,
+                    title,
+                    description,
+                    songLink
+                  );
+                }
+              });
+            }
+          });
         });
-    });
-
-    // MOOD PIN
-    document.getElementById("detailedModalForm").addEventListener("submit", e => {
-      e.preventDefault();
-      const lat = parseFloat(document.getElementById("modalLatDet").value);
-      const lng = parseFloat(document.getElementById("modalLngDet").value);
-      const title = document.getElementById("modalTitleDet").value;
-      const desc = document.getElementById("modalDescDet").value;
-      const songLink = document.getElementById("modalSongDet").value;
-
-      saveMoodPin(lat, lng, title, desc, songLink)
-        .then(() => {
-          modal.hide();
-        });
-    });
-
-    // SHOP PIN
-    document.getElementById("shopModalForm").addEventListener("submit", e => {
-      e.preventDefault();
-      const lat = parseFloat(document.getElementById("modalLatShop").value);
-      const lng = parseFloat(document.getElementById("modalLngShop").value);
-      const title = document.getElementById("modalTitleShop").value;
-      const desc = document.getElementById("modalDescShop").value;
-      const quantity = document.getElementById("modalNumberShop").value;
-      const link = document.getElementById("modalLinkShop").value;
-
-      saveShopPin(lat, lng, title, desc, shopImageUrl, quantity, link)
-        .then(() => {
-          // Reset image url for next usage
-          shopImageUrl = "";
-          modal.hide();
-        });
-    });
-
-    /* ------------------------------------------------------------------
-       9. Modal Navigation
-    ------------------------------------------------------------------ */
-    document.getElementById("modalBtnSimple").onclick = () => {
-      hideForms();
-      document.getElementById("simpleModalForm").classList.remove("d-none");
-    };
-    document.getElementById("modalBtnDetailed").onclick = () => {
-      hideForms();
-      document.getElementById("detailedModalForm").classList.remove("d-none");
-    };
-    document.getElementById("modalBtnShop").onclick = () => {
-      hideForms();
-      document.getElementById("shopModalForm").classList.remove("d-none");
-    };
-    document.getElementById("backFromSimpleModal").onclick =
-    document.getElementById("backFromDetailedModal").onclick =
-    document.getElementById("backFromShopModal").onclick = () => {
-      hideForms();
-      document.getElementById("modalChoice").classList.remove("d-none");
-    };
-
-    function hideForms() {
-      ["modalChoice", "simpleModalForm", "detailedModalForm", "shopModalForm"]
-        .forEach(id => document.getElementById(id).classList.add("d-none"));
+      });
     }
+
+    loadPinsFromFirebase();
   </script>
 </body>
 </html>
