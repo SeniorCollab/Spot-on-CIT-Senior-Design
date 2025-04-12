@@ -58,11 +58,16 @@
     }
 
     /* Buttons & iframes */
-    .like-button, .dislike-button, .edit-button, .delete-button {
+    .like-button,
+    .dislike-button,
+    .edit-button,
+    .delete-button {
       margin-top: 8px;
       margin-right: 6px;
     }
-    .pin-iframe, .pin-video, .pin-audio {
+    .pin-iframe,
+    .pin-video,
+    .pin-audio {
       display: block;
       margin-top: 8px;
       max-width: 100%;
@@ -266,6 +271,13 @@
     let showOnlyMyPins = false; // toggles filtering
     const modal = new bootstrap.Modal(document.getElementById("pinModal"));
 
+    // We'll store references to each marker so we can remove them when reloading
+    let markersList = [];
+
+    // For editing pins
+    let editingPinId = null;
+    let editingPinType = null;
+
     // Auth check
     onAuthStateChanged(auth, user => {
       if (!user) {
@@ -273,7 +285,7 @@
         return;
       }
       currentUser = user;
-      loadPinsFromFirebase();
+      loadPinsFromFirebase(); // by default, loads all pins
     });
 
     // Create the globe
@@ -304,7 +316,7 @@
           document.getElementById(`modalLat${type}`).value = lat.toFixed(5);
           document.getElementById(`modalLng${type}`).value = lng.toFixed(5);
         });
-        // New pin creation, not editing
+        // Indicate new pin creation
         editingPinId = null;
         editingPinType = null;
 
@@ -326,15 +338,16 @@
           otherwise load all pins
     ------------------------------------------------------------------ */
     function loadPinsFromFirebase() {
-      // Clear existing markers
-      earth.eachLayer(layer => {
-        if (layer !== earth.getBaseLayer()) {
-          earth.removeLayer(layer);
-        }
-      });
+      // Remove existing markers from the globe
+      markersList.forEach(m => m.removeFrom(earth));
+      markersList = [];
 
       const path = showOnlyMyPins ? `pins/${currentUser.uid}` : "pins";
       onValue(ref(db, path), snapshot => {
+        // Once data arrives, clear old markers again (in case multiple updates in real-time)
+        markersList.forEach(m => m.removeFrom(earth));
+        markersList = [];
+
         const data = snapshot.val();
         if (!data) return;
 
@@ -358,7 +371,8 @@
         // For each pin
         Object.entries(group).forEach(([pinId, pin]) => {
           if (pin.geolocation) {
-            addPin(
+            // Create the marker & store reference
+            const marker = addPin(
               pin.geolocation.lat,
               pin.geolocation.lng,
               pin,
@@ -366,6 +380,7 @@
               pinId,
               pinType
             );
+            markersList.push(marker);
           }
         });
       });
@@ -405,11 +420,9 @@
       return `<iframe class="pin-iframe" src="${link}" allowfullscreen></iframe>`;
     }
 
-    let editingPinId = null;
-    let editingPinType = null;
-
     /* ------------------------------------------------------------------
        3. Create a marker + popup (including Edit/Delete if user is owner)
+          Return the created marker so we can store it
     ------------------------------------------------------------------ */
     function addPin(lat, lng, pinData, userId, pinId, pinType) {
       const marker = WE.marker([lat, lng]).addTo(earth);
@@ -475,6 +488,8 @@
       content += `</div>`;
 
       marker.bindPopup(content);
+
+      return marker;
     }
 
     /* ------------------------------------------------------------------
@@ -533,7 +548,6 @@
     async function deletePin(userId, pinType, pinId) {
       const pinRef = ref(db, `pins/${userId}/${pinType}/${pinId}`);
       await remove(pinRef);
-      // re-load pins from DB
       loadPinsFromFirebase();
     }
 
@@ -541,7 +555,7 @@
        6. Edit Pin
           - We fetch the pin's data and open the relevant modal form
           - Pre-fill form fields
-          - On save, we call updatePin(...) instead of adding a new one
+          - On save, we call updatePin(...) instead of creating a new one
     ------------------------------------------------------------------ */
     async function editPin(userId, pinType, pinId) {
       const pinRef = ref(db, `pins/${userId}/${pinType}/${pinId}`);
@@ -552,11 +566,7 @@
       editingPinId = pinId;
       editingPinType = pinType;
 
-      // figure out which form we use
-      let formId = "";
       if (pinType === "eventPins") {
-        formId = "simpleModalForm";
-        // fill fields
         document.getElementById("modalTitleSimple").value = pinData.title || "";
         document.getElementById("modalDescSimple").value = pinData.description || "";
         document.getElementById("modalSongEvt").value = pinData.songLink || "";
@@ -564,20 +574,18 @@
         document.getElementById("modalLngSimple").value = pinData.geolocation.lng;
         eventImageUrl = pinData.imageUrl || "";
         hideForms();
-        document.getElementById(formId).classList.remove("d-none");
+        document.getElementById("simpleModalForm").classList.remove("d-none");
       }
       else if (pinType === "moodPins") {
-        formId = "detailedModalForm";
         document.getElementById("modalTitleDet").value = pinData.title || "";
         document.getElementById("modalDescDet").value = pinData.description || "";
         document.getElementById("modalSongDet").value = pinData.songLink || "";
         document.getElementById("modalLatDet").value = pinData.geolocation.lat;
         document.getElementById("modalLngDet").value = pinData.geolocation.lng;
         hideForms();
-        document.getElementById(formId).classList.remove("d-none");
+        document.getElementById("detailedModalForm").classList.remove("d-none");
       }
       else if (pinType === "shopPins") {
-        formId = "shopModalForm";
         document.getElementById("modalTitleShop").value = pinData.title || "";
         document.getElementById("modalDescShop").value = pinData.description || "";
         document.getElementById("modalNumberShop").value = pinData.quantity || "";
@@ -586,10 +594,9 @@
         document.getElementById("modalLngShop").value = pinData.geolocation.lng;
         shopImageUrl = pinData.imageUrl || "";
         hideForms();
-        document.getElementById(formId).classList.remove("d-none");
+        document.getElementById("shopModalForm").classList.remove("d-none");
       }
 
-      // show the pin modal
       modal.show();
     }
 
@@ -628,10 +635,8 @@
 
     /* ------------------------------------------------------------------
        8. Form Submissions for Each Pin Type
-          If we're editingPinId, we call updatePin;
-          else we create a new pin
+          If editingPinId is set, we update. Otherwise, we create new.
     ------------------------------------------------------------------ */
-    // EVENT PIN
     document.getElementById("simpleModalForm").addEventListener("submit", async e => {
       e.preventDefault();
       const lat = parseFloat(document.getElementById("modalLatSimple").value);
@@ -641,7 +646,6 @@
       const songLink = document.getElementById("modalSongEvt").value;
 
       if (editingPinId && editingPinType === "eventPins") {
-        // Update existing
         await updatePin("eventPins", editingPinId, {
           title,
           description: desc,
@@ -650,7 +654,6 @@
           geolocation: { lat, lng }
         });
       } else {
-        // Create new
         await saveEventPin(lat, lng, title, desc, eventImageUrl, songLink);
       }
       eventImageUrl = "";
@@ -659,7 +662,6 @@
       modal.hide();
     });
 
-    // MOOD PIN
     document.getElementById("detailedModalForm").addEventListener("submit", async e => {
       e.preventDefault();
       const lat = parseFloat(document.getElementById("modalLatDet").value);
@@ -669,7 +671,6 @@
       const songLink = document.getElementById("modalSongDet").value;
 
       if (editingPinId && editingPinType === "moodPins") {
-        // Update existing
         await updatePin("moodPins", editingPinId, {
           title,
           description: desc,
@@ -677,7 +678,6 @@
           geolocation: { lat, lng }
         });
       } else {
-        // Create new
         await saveMoodPin(lat, lng, title, desc, songLink);
       }
       editingPinId = null;
@@ -685,7 +685,6 @@
       modal.hide();
     });
 
-    // SHOP PIN
     document.getElementById("shopModalForm").addEventListener("submit", async e => {
       e.preventDefault();
       const lat = parseFloat(document.getElementById("modalLatShop").value);
@@ -696,7 +695,6 @@
       const link = document.getElementById("modalLinkShop").value;
 
       if (editingPinId && editingPinType === "shopPins") {
-        // Update existing
         await updatePin("shopPins", editingPinId, {
           title,
           description: desc,
@@ -706,7 +704,6 @@
           geolocation: { lat, lng }
         });
       } else {
-        // Create new
         await saveShopPin(lat, lng, title, desc, shopImageUrl, quantity, link);
       }
       shopImageUrl = "";
