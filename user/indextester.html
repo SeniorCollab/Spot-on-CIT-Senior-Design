@@ -86,20 +86,28 @@
     .offcanvas .nav-link {
       color: #00ffff;
       border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+      padding: 0.75rem 1rem;
     }
     .offcanvas .nav-link.active,
     .offcanvas .nav-link:hover {
       background-color: rgba(0, 31, 63, 0.5);
     }
-    /* Remove any white borders on the close button and modal */
-    .btn-close {
-      border: none !important;
-      background-color: transparent !important;
+    /* Override the WebGL Earth default popup styling */
+    .we-popup-frame, 
+    .we-popup-frame::before, 
+    .we-popup-frame::after,
+    .we-popup-content, 
+    .we-popup-content::before,
+    .we-popup-content::after {
+      border: none !important; 
+      background: none !important; 
+      box-shadow: none !important;
     }
-    .modal-content {
-      border: none;
+    .we-popup-top-pointer, 
+    .we-popup-bottom-pointer {
+      display: none !important;
     }
-    /* Tron-style gradient form */
+    /* Tron-style gradient form for modals & forms */
     .blue-gradient-form {
       background: rgba(0, 31, 63, 0.85);
       border: 1px solid #00ffff;
@@ -108,7 +116,7 @@
       padding: 1em;
       border-radius: 10px;
     }
-    /* Popup styling for pins */
+    /* Popup styling for pins with Tron effects */
     .pin-popup-content {
       background: rgba(0, 31, 63, 0.9);
       border: 1px solid #00ffff;
@@ -118,7 +126,15 @@
       border-radius: 10px;
       max-width: 300px;
     }
-    /* Button styles (overriding some Bootstrap defaults) */
+    /* Remove extra border from the close button & modal content */
+    .btn-close {
+      border: none !important;
+      background-color: transparent !important;
+    }
+    .modal-content {
+      border: none;
+    }
+    /* Button styles */
     .btn {
       font-family: 'Orbitron', sans-serif;
       text-transform: uppercase;
@@ -205,7 +221,8 @@
   <div id="earth_div"></div>
 
   <!-- Custom Hamburger (Offcanvas Toggle) -->
-  <button class="hamburger-btn" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+  <button class="hamburger-btn" type="button" id="offcanvasToggle" 
+          data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
     <div class="hamburger-icon">
       <span></span>
       <span></span>
@@ -228,22 +245,19 @@
           <li class="nav-item"><a class="nav-link" href="guide.html">Instructions</a></li>
         </ul>
       </nav>
-
-      <!-- Filter button: show my pins only vs. show all pins -->
+      <!-- Filter and Logout Buttons -->
       <button class="btn btn-outline-primary w-100 mt-3" id="toggleMyPinsBtn">
         Show My Pins Only
       </button>
-
       <button class="btn btn-danger w-100 mt-3" id="logoutBtn">
         Log Out
       </button>
-
+      <!-- Search and Add Pin Form (if needed) -->
       <h6 class="mt-4">Search Pins</h6>
       <form id="searchForm">
         <input type="text" class="form-control mb-2" id="searchInput" placeholder="Search by description">
         <button type="submit" class="btn btn-primary w-100">Search</button>
       </form>
-
       <h6 class="mt-4">Add a New Pin</h6>
       <form id="pinForm" class="blue-gradient-form">
         <div class="mb-2">
@@ -386,7 +400,7 @@
       subdomains: "abc"
     }).addTo(earth);
 
-    // Double-click detection
+    // Double-click detection for popup creation
     let lastClickTime = 0;
     const clickThreshold = 350; // ms
 
