@@ -1,62 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Interactive Map with Editable Pins</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Optional: Tron-like font from Google Fonts (Orbitron) -->
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Merged Pins - Spot On</title>
+
+  <!-- Orbitron Font & Bootstrap CSS -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
   <style>
-    /* Global Styles */
+    /* Global Tron-inspired Styles */
     html, body {
       margin: 0;
       padding: 0;
       width: 100%;
-      height: 100%;
-      overflow: hidden;
-      /* Removed background-color so the video remains visible */
-      font-family: 'Orbitron', sans-serif;
-      color: #00ffff; /* neon cyan as base text color */
-    }
-    /* Video Background */
-    #bgvideo {
-      position: fixed;
-      top: 0;
-      left: 0;
-      min-width: 100%;
       min-height: 100%;
-      z-index: -2;
-      object-fit: cover;
-      opacity: 1; /* set to 1 for full visibility */
+      overflow-x: hidden;
+      font-family: 'Orbitron', sans-serif;
+      color: #00ffff; /* Neon cyan text */
+      background-color: #000; /* Dark background */
     }
-    /* Globe / WebGL Earth Container */
-    #earth_div {
-      position: fixed;
+
+    /* Horizontal Icon Navigation Bar */
+    .icon-nav {
+      display: flex;
+      overflow-x: auto;
+      background-color: rgba(0, 31, 63, 0.85);
+      box-shadow: 0 0 10px #00ffff;
+      border-bottom: 1px solid #00ffff;
+      padding: 0.5rem 1rem;
+      gap: 1rem;
+      position: sticky;
       top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
+      z-index: 1000;
     }
+    .icon-nav button {
+      background: none;
+      border: 1px solid #00ffff;
+      color: #00ffff;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+    }
+    .icon-nav button.active {
+      background-color: rgba(0, 255, 255, 0.2);
+    }
+    .icon-nav button:hover {
+      background-color: rgba(0, 255, 255, 0.1);
+    }
+
     /* Offcanvas Toggle (Hamburger) */
     #offcanvasToggle {
       position: fixed;
       top: 20px;
       right: 20px;
-      z-index: 20;
-      background: transparent;
-      border: none;
-      outline: none;
-    }
-    .hamburger-btn {
+      z-index: 1200;
       background: none;
       border: none;
-      padding: 0;
-      cursor: pointer;
-      z-index: 20;
-      position: fixed;
-      top: 20px;
-      right: 20px;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .hamburger-icon {
       width: 30px;
@@ -69,804 +78,657 @@
       display: block;
       height: 4px;
       width: 100%;
-      background-color: #00ffff; /* neon cyan */
+      background-color: #00ffff;
       border-radius: 2px;
       box-shadow: 0 0 5px #00ffff;
     }
-    /* Tron-inspired Offcanvas Sidebar */
+    /* Offcanvas */
     .offcanvas {
       background-color: rgba(0, 0, 0, 0.95);
       border-left: 2px solid #00ffff;
     }
-    .offcanvas-header, .offcanvas-body, .offcanvas-title {
+    .offcanvas-header,
+    .offcanvas-body,
+    .offcanvas-title {
       color: #00ffff;
     }
     .offcanvas .nav-link {
       color: #00ffff;
       border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+      padding: 0.75rem 1rem;
     }
-    .offcanvas .nav-link:hover {
+    .offcanvas .nav-link:hover,
+    .offcanvas .nav-link.active {
       background-color: rgba(0, 31, 63, 0.5);
     }
-    /* Tron-style gradient form (for modals & forms) */
-    .blue-gradient-form {
+
+    /* Section Container */
+    .section-container {
+      display: none; /* Only show the active section */
+      padding: 1rem;
+    }
+    .section-container.active {
+      display: block;
+    }
+
+    /* Page Header */
+    .page-header {
       background: rgba(0, 31, 63, 0.85);
       border: 1px solid #00ffff;
       box-shadow: 0 0 10px #00ffff;
       color: #00ffff;
-      padding: 1em;
-      border-radius: 10px;
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      margin: 1rem 0;
+      text-align: center;
     }
-    /* Popup styling for pins */
-    .pin-popup-content {
-      background: rgba(0, 31, 63, 0.9);
+    .page-header h2 {
+      font-size: 2rem;
+      margin: 0;
+      text-shadow: 0 0 5px #00ffff;
+    }
+
+    /* Pin Card Styles */
+    .pin-card {
+      background: rgba(0, 31, 63, 0.85);
       border: 1px solid #00ffff;
       box-shadow: 0 0 10px #00ffff;
-      color: #00ffff;
-      padding: 1em;
-      border-radius: 10px;
-      max-width: 300px;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      position: relative;
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-    /* Button styles (overriding some Bootstrap defaults) */
-    .btn {
-      font-family: 'Orbitron', sans-serif;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+    .pin-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 15px #00ffff;
     }
-    .btn-outline-primary {
-      border-color: #00ffff;
-      color: #00ffff;
+    .pin-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+      text-shadow: 0 0 5px #00ffff;
     }
-    .btn-outline-primary:hover {
-      background-color: #00ffff;
-      color: #000;
-    }
-    .btn-outline-secondary {
-      border-color: #00ffff;
-      color: #00ffff;
-    }
-    .btn-outline-secondary:hover {
-      background-color: #00ffff;
-      color: #000;
-    }
-    .btn-outline-light {
-      border-color: #00ffff;
-      color: #00ffff;
-    }
-    .btn-outline-light:hover {
-      background-color: #00ffff;
-      color: #000;
-    }
-    .btn-warning {
-      background-color: #ffaa00;
-      border-color: #ffaa00;
-      color: #000;
-    }
-    .btn-warning:hover {
-      background-color: #ffcc00;
-    }
-    .btn-danger {
-      background-color: #ff3333;
-      border-color: #ff3333;
-      color: #000;
-    }
-    .btn-danger:hover {
-      background-color: #ff6666;
-    }
-    .btn-success {
-      background-color: #00ff00;
-      border-color: #00ff00;
-      color: #000;
-    }
-    .btn-success:hover {
-      background-color: #33ff33;
-    }
-    /* Embedded media elements */
-    .pin-iframe,
-    .pin-video,
-    .pin-audio {
-      display: block;
-      margin-top: 8px;
-      max-width: 100%;
-      border: none;
-      box-shadow: 0 0 5px #00ffff;
+    .pin-description {
+      color: #66ffff;
+      margin: 0.5rem 0;
     }
     .pin-iframe {
-      height: 150px;
-    }
-    .pin-image {
-      margin-top: 8px;
-      max-width: 100%;
-      height: auto;
-      border-radius: 5px;
-      border: 2px solid #00ffff;
+      width: 100%;
+      height: 220px;
+      border: none;
+      margin-top: 0.5rem;
       box-shadow: 0 0 5px #00ffff;
+    }
+
+    /* Checkbox for Bulk Selection */
+    .select-checkbox {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      transform: scale(1.2);
+    }
+
+    /* Bulk Delete, Load More Buttons */
+    .bulk-delete-btn, .load-more-btn {
+      margin-bottom: 1rem;
+      margin-right: 1rem;
+    }
+
+    /* Edit Modal */
+    .modal-content {
+      background-color: #000;
+      color: #00ffff;
+      border: 1px solid #00ffff;
+    }
+    .modal-header, .modal-footer {
+      border-bottom: 1px solid #00ffff;
+      border-top: 1px solid #00ffff;
+    }
+    .form-label {
+      color: #00ffff;
+    }
+    .form-control {
+      background-color: rgba(0,0,0,0.8);
+      color: #00ffff;
+      border: 1px solid #00ffff;
     }
   </style>
 </head>
 <body>
-  <!-- Background Video -->
-  <video autoplay muted loop id="bgvideo">
-    <source src="stars.mp4" type="video/mp4">
-  </video>
 
-  <!-- WebGL Earth Container -->
-  <div id="earth_div"></div>
-
-  <!-- Offcanvas Toggle (hamburger) -->
-  <button class="hamburger-btn" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
-    <div class="hamburger-icon">
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
-  </button>
-
-  <!-- Sidebar / Offcanvas -->
-  <div class="offcanvas offcanvas-end" id="offcanvasNavbar" tabindex="-1">
-    <div class="offcanvas-header">
-      <h5 class="offcanvas-title">Spot On</h5>
-      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
-    </div>
-    <div class="offcanvas-body">
-      <nav class="navbar">
-        <ul class="navbar-nav">
-          <li class="nav-item"><a class="nav-link active" href="index.html">Home</a></li>
-          <li class="nav-item"><a class="nav-link" href="pins.html">Pins</a></li>
-          <li class="nav-item"><a class="nav-link" href="songs.html">Songs</a></li>
-          <li class="nav-item"><a class="nav-link" href="events.html">Events</a></li>
-          <li class="nav-item"><a class="nav-link" href="shop.html">My Store</a></li>
-        </ul>
-      </nav>
-
-      <!-- Filter button: show my pins only vs. show all pins -->
-      <button class="btn btn-outline-primary w-100 mt-3" id="toggleMyPinsBtn">
-        Show My Pins Only
-      </button>
-
-      <button class="btn btn-danger w-100 mt-3" id="logoutBtn">
-        Log Out
-      </button>
-
-      <h6 class="mt-4">Search Pins</h6>
-      <form id="searchForm">
-        <input type="text" class="form-control mb-2" id="searchInput" placeholder="Search by description">
-        <button type="submit" class="btn btn-primary w-100">Search</button>
-      </form>
-
-      <h6 class="mt-4">Add a New Pin</h6>
-      <form id="pinForm" class="blue-gradient-form">
-        <div class="mb-2">
-          <label for="latitude" class="form-label">Latitude</label>
-          <input type="number" class="form-control" id="latitude" required>
-        </div>
-        <div class="mb-2">
-          <label for="longitude" class="form-label">Longitude</label>
-          <input type="number" class="form-control" id="longitude" required>
-        </div>
-        <div class="mb-2">
-          <label for="description" class="form-label">Description</label>
-          <input type="text" class="form-control" id="description" required>
-        </div>
-        <button type="submit" class="btn btn-success w-100">Add Pin</button>
-      </form>
-    </div>
+<!-- Offcanvas Toggle (Hamburger) -->
+<button class="hamburger-btn" type="button" id="offcanvasToggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
+  <div class="hamburger-icon">
+    <span></span>
+    <span></span>
+    <span></span>
   </div>
+</button>
 
-  <!-- Main Modal for Pin Creation -->
-  <div class="modal fade" id="pinModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content" style="background-color: rgba(0,0,0,0.95); border: 1px solid #00ffff;">
-        <div class="modal-header">
-          <h5 class="modal-title">Add Pin</h5>
-          <button class="btn-close" data-bs-dismiss="modal"></button>
+<!-- Offcanvas Navigation -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Spot On</h5>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <nav class="navbar">
+      <ul class="navbar-nav">
+        <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
+        <!-- You can link back to this same page or other pages if you wish -->
+        <li class="nav-item"><a class="nav-link" href="#">Another Page</a></li>
+        <li class="nav-item"><a class="nav-link" href="user/userlogin.html">User</a></li>
+        <li class="nav-item"><a class="nav-link" href="admin/adminlogin.html">Admin</a></li>
+        <li class="nav-item"><a class="nav-link" href="register.html">Sign Up</a></li>
+      </ul>
+    </nav>
+    <p class="mt-3">Merged pins, events, mood in one place!</p>
+  </div>
+</div>
+
+<!-- Horizontal Icon Navigation -->
+<div class="icon-nav" id="iconNav">
+  <button data-target="allPinsSection" class="active">All Pins</button>
+  <button data-target="myPinsSection">My Pins</button>
+  <button data-target="allEventsSection">All Events</button>
+  <button data-target="myEventsSection">My Events</button>
+  <button data-target="allMoodSection">All Mood</button>
+  <button data-target="myMoodSection">My Mood</button>
+</div>
+
+<!-- Sections -->
+<div id="allPinsSection" class="section-container active">
+  <div class="page-header"><h2>All Pins</h2></div>
+  <button class="btn btn-outline-info load-more-btn" id="loadMoreAllPinsBtn">Load More</button>
+  <div id="allPinsList"></div>
+</div>
+
+<div id="myPinsSection" class="section-container">
+  <div class="page-header d-flex justify-content-between align-items-center flex-wrap">
+    <h2>My Pins</h2>
+    <button class="btn btn-outline-danger bulk-delete-btn" id="bulkDeleteMyPinsBtn">Delete Selected</button>
+  </div>
+  <div id="myPinsList"></div>
+</div>
+
+<div id="allEventsSection" class="section-container">
+  <div class="page-header"><h2>All Events</h2></div>
+  <button class="btn btn-outline-info load-more-btn" id="loadMoreAllEventsBtn">Load More</button>
+  <div id="allEventsList"></div>
+</div>
+
+<div id="myEventsSection" class="section-container">
+  <div class="page-header d-flex justify-content-between align-items-center flex-wrap">
+    <h2>My Events</h2>
+    <button class="btn btn-outline-danger bulk-delete-btn" id="bulkDeleteMyEventsBtn">Delete Selected</button>
+  </div>
+  <div id="myEventsList"></div>
+</div>
+
+<div id="allMoodSection" class="section-container">
+  <div class="page-header"><h2>All Mood Pins</h2></div>
+  <button class="btn btn-outline-info load-more-btn" id="loadMoreAllMoodBtn">Load More</button>
+  <div id="allMoodList"></div>
+</div>
+
+<div id="myMoodSection" class="section-container">
+  <div class="page-header d-flex justify-content-between align-items-center flex-wrap">
+    <h2>My Mood Pins</h2>
+    <button class="btn btn-outline-danger bulk-delete-btn" id="bulkDeleteMyMoodBtn">Delete Selected</button>
+  </div>
+  <div id="myMoodList"></div>
+</div>
+
+<!-- Edit Modal (for Mood or Event) -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <form class="modal-content" id="editForm">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Pin</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editPinType" />
+        <input type="hidden" id="editPinOwner" />
+        <input type="hidden" id="editPinId" />
+
+        <div class="mb-3">
+          <label for="editPinTitle" class="form-label">Title</label>
+          <input type="text" class="form-control" id="editPinTitle" required />
         </div>
-        <div class="modal-body">
-
-          <div id="modalChoice" class="text-center">
-            <p>Select Pin Type:</p>
-            <button class="btn btn-outline-primary mb-2" id="modalBtnSimple">Pin Event</button>
-            <button class="btn btn-outline-secondary mb-2" id="modalBtnDetailed">Pin Mood</button>
-            <button class="btn btn-outline-success mb-2" id="modalBtnShop">Pin Shop Item</button>
-          </div>
-
-          <!-- Event Pin Form -->
-          <form id="simpleModalForm" class="d-none blue-gradient-form">
-            <label for="modalTitleSimple" class="form-label">Title</label>
-            <input type="text" class="form-control mb-2" id="modalTitleSimple" required>
-            <label for="modalDescSimple" class="form-label">Description</label>
-            <input type="text" class="form-control mb-2" id="modalDescSimple" required>
-            <!-- New: Song/Audio link for event pins -->
-            <label for="modalSongEvt" class="form-label">Song/Audio/Video Link (Optional)</label>
-            <input type="url" class="form-control mb-2" id="modalSongEvt" placeholder="https://...">
-            <button type="button" class="btn btn-outline-secondary mb-2" id="uploadEventBtn">Upload Event Image</button>
-            <input type="hidden" id="modalImageSimple">
-            <label for="modalLatSimple" class="form-label">Latitude</label>
-            <input type="number" class="form-control mb-2" id="modalLatSimple" readonly>
-            <label for="modalLngSimple" class="form-label">Longitude</label>
-            <input type="number" class="form-control mb-2" id="modalLngSimple" readonly>
-            <button type="submit" class="btn btn-primary w-100">Save Event Pin</button>
-            <button type="button" class="btn btn-link mt-2" id="backFromSimpleModal">← Back</button>
-          </form>
-
-          <!-- Mood Pin Form -->
-          <form id="detailedModalForm" class="d-none blue-gradient-form">
-            <label for="modalTitleDet" class="form-label">Title</label>
-            <input type="text" class="form-control mb-2" id="modalTitleDet" required>
-            <label for="modalDescDet" class="form-label">Description</label>
-            <textarea class="form-control mb-2" id="modalDescDet" rows="2" required></textarea>
-            <label for="modalSongDet" class="form-label">Song/Video Link (Optional)</label>
-            <input type="url" class="form-control mb-2" id="modalSongDet" placeholder="https://...">
-            <label for="modalLatDet" class="form-label">Latitude</label>
-            <input type="number" class="form-control mb-2" id="modalLatDet" readonly>
-            <label for="modalLngDet" class="form-label">Longitude</label>
-            <input type="number" class="form-control mb-2" id="modalLngDet" readonly>
-            <button type="submit" class="btn btn-primary w-100">Save Mood Pin</button>
-            <button type="button" class="btn btn-link mt-2" id="backFromDetailedModal">← Back</button>
-          </form>
-
-          <!-- Shop Pin Form -->
-          <form id="shopModalForm" class="d-none blue-gradient-form">
-            <label for="modalTitleShop" class="form-label">Title</label>
-            <input type="text" class="form-control mb-2" id="modalTitleShop" required>
-            <label for="modalDescShop" class="form-label">Description</label>
-            <textarea class="form-control mb-2" id="modalDescShop" rows="2" required></textarea>
-            <button type="button" class="btn btn-outline-secondary mb-2" id="uploadShopBtn">Upload Shop Image</button>
-            <input type="hidden" id="modalImageShop">
-            <label for="modalNumberShop" class="form-label">Quantity</label>
-            <input type="number" class="form-control mb-2" id="modalNumberShop" placeholder="Quantity" required>
-            <label for="modalLinkShop" class="form-label">Link</label>
-            <input type="url" class="form-control mb-2" id="modalLinkShop" placeholder="Link" required>
-            <label for="modalLatShop" class="form-label">Latitude</label>
-            <input type="number" class="form-control mb-2" id="modalLatShop" readonly>
-            <label for="modalLngShop" class="form-label">Longitude</label>
-            <input type="number" class="form-control mb-2" id="modalLngShop" readonly>
-            <button type="submit" class="btn btn-success w-100">Save Shop Item</button>
-            <button type="button" class="btn btn-link mt-2" id="backFromShopModal">← Back</button>
-          </form>
-
+        <div class="mb-3">
+          <label for="editPinDescription" class="form-label">Description</label>
+          <textarea class="form-control" id="editPinDescription" rows="2"></textarea>
+        </div>
+        <!-- For mood pins with a link -->
+        <div class="mb-3" id="editSongLinkGroup" style="display: none;">
+          <label for="editPinSongLink" class="form-label">Song/Video Link</label>
+          <input type="url" class="form-control" id="editPinSongLink" />
         </div>
       </div>
-    </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-outline-info">Save Changes</button>
+      </div>
+    </form>
   </div>
+</div>
 
-  <!-- WebGL Earth & Bootstrap JS -->
-  <script src="https://www.webglearth.com/v2/api.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Firebase + Auth Scripts -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+  import { getDatabase, ref, onValue, remove, update, get, query, orderByKey } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
-  <!-- Firebase v10+ -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getDatabase, ref, push, set, onValue, get, update, remove } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+  // ------------------- Firebase Config ---------------------
+  const firebaseConfig = {
+    apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
+    authDomain: "spoton-cit481.firebaseapp.com",
+    databaseURL: "https://spoton-cit481-default-rtdb.firebaseio.com",
+    projectId: "spoton-cit481",
+    storageBucket: "spoton-cit481.appspot.com",
+    messagingSenderId: "753873898041",
+    appId: "1:753873898041:web:bde5e8f86aea63b175dbe8"
+  };
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
-      authDomain: "spoton-cit481.firebaseapp.com",
-      databaseURL: "https://spoton-cit481-default-rtdb.firebaseio.com",
-      projectId: "spoton-cit481",
-      storageBucket: "spoton-cit481.appspot.com",
-      messagingSenderId: "753873898041",
-      appId: "1:753873898041:web:bde5e8f86aea63b175dbe8"
-    };
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const auth = getAuth(app);
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const auth = getAuth(app);
+  let currentUser = null;
 
-    let currentUser = null;
-    let eventImageUrl = "";
-    let shopImageUrl = "";
-    let showOnlyMyPins = false;
-    const modal = new bootstrap.Modal(document.getElementById("pinModal"));
+  // ------------------- HTML Element References -------------------
+  const iconNav = document.getElementById("iconNav");
+  const sections = document.querySelectorAll(".section-container");
 
-    let markersList = [];
-    let editingPinId = null;
-    let editingPinType = null;
+  const allPinsList     = document.getElementById("allPinsList");
+  const myPinsList      = document.getElementById("myPinsList");
+  const allEventsList   = document.getElementById("allEventsList");
+  const myEventsList    = document.getElementById("myEventsList");
+  const allMoodList     = document.getElementById("allMoodList");
+  const myMoodList      = document.getElementById("myMoodList");
 
-    // Auth check
-    onAuthStateChanged(auth, user => {
-      if (!user) {
-        window.location.href = "user/userlogin.html";
-        return;
+  const bulkDeleteMyPinsBtn    = document.getElementById("bulkDeleteMyPinsBtn");
+  const bulkDeleteMyEventsBtn  = document.getElementById("bulkDeleteMyEventsBtn");
+  const bulkDeleteMyMoodBtn    = document.getElementById("bulkDeleteMyMoodBtn");
+
+  const loadMoreAllPinsBtn     = document.getElementById("loadMoreAllPinsBtn");
+  const loadMoreAllEventsBtn   = document.getElementById("loadMoreAllEventsBtn");
+  const loadMoreAllMoodBtn     = document.getElementById("loadMoreAllMoodBtn");
+
+  // Edit Modal
+  const editModal        = new bootstrap.Modal(document.getElementById("editModal"));
+  const editForm         = document.getElementById("editForm");
+  const editPinType      = document.getElementById("editPinType");      // "moodPins" or "eventPins"
+  const editPinOwner     = document.getElementById("editPinOwner");     // which user
+  const editPinId        = document.getElementById("editPinId");
+  const editPinTitle     = document.getElementById("editPinTitle");
+  const editPinDesc      = document.getElementById("editPinDescription");
+  const editPinSongLink  = document.getElementById("editPinSongLink");
+  const editSongLinkGroup= document.getElementById("editSongLinkGroup");
+
+  // ------------------- Data Storage -------------------
+  // We'll store all pins in arrays, then show them in increments of 20
+  let allPinsArray = [];
+  let displayedAllPinsCount = 0;
+
+  let allEventsArray = [];
+  let displayedAllEventsCount = 0;
+
+  let allMoodArray = [];
+  let displayedAllMoodCount = 0;
+
+  // My pins are typically fewer, but let's store them too
+  let myEventPins = [];
+  let myMoodPins = [];
+
+  // ------------------- Utility Functions -------------------
+  function generateEmbedContent(link) {
+    if (!link) return "";
+    // Spotify
+    if (link.includes("open.spotify.com/track/")) {
+      const embedUrl = link.replace("open.spotify.com/track/", "open.spotify.com/embed/track/");
+      return `<iframe class="pin-iframe" src="${embedUrl}" allow="encrypted-media" allowfullscreen></iframe>`;
+    }
+    // YouTube
+    if (link.includes("youtube.com/watch?v=") || link.includes("youtu.be/")) {
+      let videoId = "";
+      if (link.includes("watch?v=")) {
+        videoId = link.split("watch?v=")[1].split("&")[0];
+      } else {
+        videoId = link.split("youtu.be/")[1];
       }
-      currentUser = user;
-      loadPinsFromFirebase(); // by default, loads all pins
-    });
+      const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+      return `<iframe class="pin-iframe" src="${embedUrl}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+    }
+    // Fallback
+    return `<iframe class="pin-iframe" src="${link}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+  }
 
-    // Create the globe
-    const earth = new WE.map("earth_div");
-    earth.setView([0, 0], 2);
-    WE.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap contributors",
-      subdomains: "abc"
-    }).addTo(earth);
+  // Create a pin card DOM element
+  // pinObj = { title, description, songLink, geolocation, imageUrl, ... } from DB
+  // type = "moodPins" or "eventPins"
+  // ownerUid = user who created it
+  // pinKey = ID of the pin
+  // isOwner = boolean
+  function createPinCard(pinObj, type, ownerUid, pinKey, isOwner) {
+    const card = document.createElement("div");
+    card.className = "pin-card";
 
-    // Double-click detection
-    let lastClickTime = 0;
-    const clickThreshold = 350; // ms
-
-    earth.on("click", event => {
-      const now = Date.now();
-      if (now - lastClickTime < clickThreshold) {
-        // It's a double-click
-        handleDoubleClick(event);
-      }
-      lastClickTime = now;
-    });
-
-    function handleDoubleClick(event) {
-      if (event.latlng) {
-        const { lat, lng } = event.latlng;
-        ["Simple", "Det", "Shop"].forEach(type => {
-          document.getElementById(`modalLat${type}`).value = lat.toFixed(5);
-          document.getElementById(`modalLng${type}`).value = lng.toFixed(5);
-        });
-        // Indicate new pin creation
-        editingPinId = null;
-        editingPinType = null;
-        modal.show();
-      }
+    // Bulk deletion checkbox (only if it's the owner)
+    if (isOwner) {
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.className = "select-checkbox";
+      checkbox.dataset.pinId = pinKey;
+      checkbox.dataset.pinType = type;
+      card.appendChild(checkbox);
     }
 
-    // Filter button
-    const toggleMyPinsBtn = document.getElementById("toggleMyPinsBtn");
-    toggleMyPinsBtn.addEventListener("click", () => {
-      showOnlyMyPins = !showOnlyMyPins;
-      toggleMyPinsBtn.textContent = showOnlyMyPins ? "Show All Pins" : "Show My Pins Only";
-      loadPinsFromFirebase(); // reload with filter
-    });
+    // Title
+    let html = `<div class="pin-title">${pinObj.title || "Untitled Pin"}</div>`;
+    html += `<div class="pin-description">${pinObj.description || ""}</div>`;
 
-    // Logout button
-    const logoutBtn = document.getElementById("logoutBtn");
-    logoutBtn.addEventListener("click", () => {
-      signOut(auth)
-        .then(() => {
-          // Signed out successfully
-          window.location.href = "../index.html";
-        })
-        .catch(err => {
-          console.error("Sign-out error:", err);
-          alert("Could not sign out. See console.");
-        });
-    });
+    // If it's a mood pin with a link
+    if (type === "moodPins" && pinObj.songLink) {
+      html += generateEmbedContent(pinObj.songLink);
+    }
+    // If it's an event pin with an image
+    if (type === "eventPins" && pinObj.imageUrl) {
+      html += `<img src="${pinObj.imageUrl}" alt="Event Image" class="img-fluid rounded mt-2" style="max-height:250px; object-fit:cover;">`;
+    }
+    // If event pin has geolocation
+    if (type === "eventPins" && pinObj.geolocation) {
+      const { lat, lng } = pinObj.geolocation;
+      html += `<div class="pin-description mt-1">Location: ${lat}, ${lng}</div>`;
+    }
 
-    /* ------------------------------------------------------------------
-       Load existing pins from Firebase
-    ------------------------------------------------------------------ */
-    function loadPinsFromFirebase() {
-      // Remove existing markers
-      markersList.forEach(m => m.removeFrom(earth));
-      markersList = [];
+    card.innerHTML += html;
 
-      const path = showOnlyMyPins ? `pins/${currentUser.uid}` : "pins";
-      onValue(ref(db, path), snapshot => {
-        // Clear out old markers again on each update
-        markersList.forEach(m => m.removeFrom(earth));
-        markersList = [];
+    // Actions: Edit/Delete only if the user is the owner
+    if (isOwner) {
+      const actions = document.createElement("div");
+      actions.className = "mt-2";
 
-        const data = snapshot.val();
-        if (!data) return;
+      const editBtn = document.createElement("button");
+      editBtn.className = "btn btn-sm btn-outline-secondary me-2";
+      editBtn.textContent = "Edit";
+      editBtn.addEventListener("click", () => {
+        // Populate modal
+        editPinType.value = type;
+        editPinOwner.value = ownerUid;
+        editPinId.value = pinKey;
 
-        if (showOnlyMyPins) {
-          // data = { eventPins: {...}, moodPins: {...}, shopPins: {...} }
-          loadUserPinTypes(currentUser.uid, data);
+        // Fill fields
+        editPinTitle.value = pinObj.title || "";
+        editPinDesc.value = pinObj.description || "";
+        if (type === "moodPins") {
+          editSongLinkGroup.style.display = "block";
+          editPinSongLink.value = pinObj.songLink || "";
         } else {
-          // data = { userId1: {...}, userId2: {...}, ... }
-          Object.entries(data).forEach(([userId, userData]) => {
-            loadUserPinTypes(userId, userData);
-          });
+          editSongLinkGroup.style.display = "none";
+          editPinSongLink.value = "";
+        }
+
+        // Show modal
+        editModal.show();
+      });
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "btn btn-sm btn-outline-danger";
+      delBtn.textContent = "Delete";
+      delBtn.addEventListener("click", () => {
+        if (confirm("Delete this pin?")) {
+          remove(ref(db, `pins/${ownerUid}/${type}/${pinKey}`));
         }
       });
+
+      actions.appendChild(editBtn);
+      actions.appendChild(delBtn);
+      card.appendChild(actions);
     }
 
-    function loadUserPinTypes(userId, userData) {
-      ["eventPins", "moodPins", "shopPins"].forEach(pinType => {
-        const group = userData[pinType];
-        if (!group) return;
+    return card;
+  }
 
-        // For each pin
-        Object.entries(group).forEach(([pinId, pin]) => {
-          if (pin.geolocation) {
-            const marker = addPin(
-              pin.geolocation.lat,
-              pin.geolocation.lng,
-              pin,
-              userId,
-              pinId,
-              pinType
-            );
-            markersList.push(marker);
+  // ------------------- Toggle Section Display -------------------
+  iconNav.addEventListener("click", (e) => {
+    if (e.target.matches("button[data-target]")) {
+      const targetId = e.target.getAttribute("data-target");
+      // Update active button
+      iconNav.querySelectorAll("button").forEach(btn => btn.classList.remove("active"));
+      e.target.classList.add("active");
+      // Update sections
+      sections.forEach(sec => {
+        sec.classList.remove("active");
+        if (sec.id === targetId) sec.classList.add("active");
+      });
+    }
+  });
+
+  // ------------------- Bulk Deletion -------------------
+  function bulkDelete(sectionContainerId) {
+    // Find all checked checkboxes in that container
+    const container = document.getElementById(sectionContainerId);
+    const checkboxes = container.querySelectorAll(".select-checkbox:checked");
+    if (!checkboxes.length) {
+      alert("No pins selected for deletion.");
+      return;
+    }
+    if (!confirm(`Delete ${checkboxes.length} selected pin(s)?`)) {
+      return;
+    }
+    checkboxes.forEach(checkbox => {
+      const pinId = checkbox.dataset.pinId;
+      const pinType = checkbox.dataset.pinType;
+      remove(ref(db, `pins/${currentUser.uid}/${pinType}/${pinId}`));
+    });
+  }
+
+  bulkDeleteMyPinsBtn.addEventListener("click", () => {
+    // "My Pins" section has moodPins + eventPins
+    bulkDelete("myPinsSection");
+  });
+  bulkDeleteMyEventsBtn.addEventListener("click", () => {
+    // Just event pins
+    bulkDelete("myEventsSection");
+  });
+  bulkDeleteMyMoodBtn.addEventListener("click", () => {
+    // Just mood pins
+    bulkDelete("myMoodSection");
+  });
+
+  // ------------------- Load More Buttons (Client-Side) -------------------
+  function displayPinsInContainer(pinArray, container, displayedCountRef, howMany=20) {
+    const end = displayedCountRef + howMany;
+    const slice = pinArray.slice(displayedCountRef, end);
+
+    slice.forEach((item) => {
+      const card = createPinCard(item.pin, item.type, item.ownerUid, item.key, item.isOwner);
+      container.appendChild(card);
+    });
+    return end; // new displayedCount
+  }
+
+  // All Pins
+  loadMoreAllPinsBtn.addEventListener("click", () => {
+    displayedAllPinsCount = displayPinsInContainer(allPinsArray, allPinsList, displayedAllPinsCount, 20);
+    if (displayedAllPinsCount >= allPinsArray.length) {
+      loadMoreAllPinsBtn.style.display = "none";
+    }
+  });
+  // All Events
+  loadMoreAllEventsBtn.addEventListener("click", () => {
+    displayedAllEventsCount = displayPinsInContainer(allEventsArray, allEventsList, displayedAllEventsCount, 20);
+    if (displayedAllEventsCount >= allEventsArray.length) {
+      loadMoreAllEventsBtn.style.display = "none";
+    }
+  });
+  // All Mood
+  loadMoreAllMoodBtn.addEventListener("click", () => {
+    displayedAllMoodCount = displayPinsInContainer(allMoodArray, allMoodList, displayedAllMoodCount, 20);
+    if (displayedAllMoodCount >= allMoodArray.length) {
+      loadMoreAllMoodBtn.style.display = "none";
+    }
+  });
+
+  // ------------------- Edit Modal Submit -------------------
+  editForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const pinKey = editPinId.value;
+    const type   = editPinType.value;
+    const owner  = editPinOwner.value; // must match currentUser.uid
+    if (owner !== currentUser.uid) {
+      alert("You do not own this pin.");
+      return;
+    }
+
+    const updates = {
+      title: editPinTitle.value.trim(),
+      description: editPinDesc.value.trim()
+    };
+    // If it's a mood pin, we also update the link
+    if (type === "moodPins") {
+      updates.songLink = editPinSongLink.value.trim();
+    }
+
+    // Update in DB
+    update(ref(db, `pins/${owner}/${type}/${pinKey}`), updates)
+      .then(() => {
+        editModal.hide();
+      })
+      .catch((err) => {
+        console.error("Error updating pin:", err);
+        alert("Failed to update pin. See console for details.");
+      });
+  });
+
+  // ------------------- Fetch Data -------------------
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = "user/userlogin.html";
+      return;
+    }
+    currentUser = user;
+
+    // 1) Build My Pins (event + mood)
+    // We'll listen in real-time for the current user
+    const myPinsRef = ref(db, `pins/${currentUser.uid}`);
+    onValue(myPinsRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      // Clear UI
+      myPinsList.innerHTML = "";
+      myEventsList.innerHTML = "";
+      myMoodList.innerHTML = "";
+
+      // Re-build arrays
+      myEventPins = [];
+      myMoodPins = [];
+
+      // eventPins
+      if (data.eventPins) {
+        Object.entries(data.eventPins).forEach(([key, val]) => {
+          const card = createPinCard(val, "eventPins", currentUser.uid, key, true);
+          // Appear in "My Pins" + "My Events"
+          myPinsList.appendChild(card.cloneNode(true));
+          myEventsList.appendChild(card);
+          myEventPins.push({key, pin: val});
+        });
+      }
+      // moodPins
+      if (data.moodPins) {
+        Object.entries(data.moodPins).forEach(([key, val]) => {
+          const card = createPinCard(val, "moodPins", currentUser.uid, key, true);
+          // Appear in "My Pins" + "My Mood"
+          myPinsList.appendChild(card.cloneNode(true));
+          myMoodList.appendChild(card);
+          myMoodPins.push({key, pin: val});
+        });
+      }
+    });
+
+    // 2) Build "All" sections. We will do a single read for the entire pins/ node once,
+    // then store them in arrays for "All Pins", "All Events", "All Mood".
+    // Then we do client-side pagination with "Load More" buttons.
+    const pinsRootRef = ref(db, "pins");
+    // We do a single get() to load everything
+    get(query(pinsRootRef, orderByKey()))
+      .then((snap) => {
+        const allData = snap.val() || {};
+        // We'll build arrays of { pin, type, ownerUid, key, isOwner }
+        let tempAllPins = [];
+        let tempAllEvents = [];
+        let tempAllMood = [];
+
+        // Loop over each user
+        Object.entries(allData).forEach(([uid, userPins]) => {
+          // eventPins
+          if (userPins.eventPins) {
+            Object.entries(userPins.eventPins).forEach(([pinId, pinVal]) => {
+              const item = {
+                pin: pinVal,
+                type: "eventPins",
+                ownerUid: uid,
+                key: pinId,
+                isOwner: (uid === currentUser.uid)
+              };
+              tempAllPins.push(item);
+              tempAllEvents.push(item);
+            });
+          }
+          // moodPins
+          if (userPins.moodPins) {
+            Object.entries(userPins.moodPins).forEach(([pinId, pinVal]) => {
+              const item = {
+                pin: pinVal,
+                type: "moodPins",
+                ownerUid: uid,
+                key: pinId,
+                isOwner: (uid === currentUser.uid)
+              };
+              tempAllPins.push(item);
+              tempAllMood.push(item);
+            });
           }
         });
+
+        // For a “true” ordering, we could sort by key or something else
+        tempAllPins.sort((a, b) => a.key.localeCompare(b.key));
+        tempAllEvents.sort((a, b) => a.key.localeCompare(b.key));
+        tempAllMood.sort((a, b) => a.key.localeCompare(b.key));
+
+        // Store globally
+        allPinsArray = tempAllPins;
+        allEventsArray = tempAllEvents;
+        allMoodArray = tempAllMood;
+
+        // Reset displayed counters
+        displayedAllPinsCount = 0;
+        displayedAllEventsCount = 0;
+        displayedAllMoodCount = 0;
+
+        // Clear containers
+        allPinsList.innerHTML = "";
+        allEventsList.innerHTML = "";
+        allMoodList.innerHTML = "";
+
+        // Load first page of each
+        loadMoreAllPinsBtn.style.display = allPinsArray.length > 20 ? "inline-block" : "none";
+        loadMoreAllEventsBtn.style.display = allEventsArray.length > 20 ? "inline-block" : "none";
+        loadMoreAllMoodBtn.style.display = allMoodArray.length > 20 ? "inline-block" : "none";
+
+        displayedAllPinsCount    = displayPinsInContainer(allPinsArray, allPinsList, displayedAllPinsCount, 20);
+        displayedAllEventsCount  = displayPinsInContainer(allEventsArray, allEventsList, displayedAllEventsCount, 20);
+        displayedAllMoodCount    = displayPinsInContainer(allMoodArray, allMoodList, displayedAllMoodCount, 20);
+      })
+      .catch(err => {
+        console.error("Error fetching all pins:", err);
       });
-    }
+  });
 
-    /* ------------------------------------------------------------------
-       Convert user link to an embeddable snippet
-    ------------------------------------------------------------------ */
-    function generateEmbedContent(link) {
-      if (!link) return "";
-      // Spotify
-      if (link.includes("open.spotify.com/track/")) {
-        const embedUrl = link.replace("open.spotify.com/track/", "open.spotify.com/embed/track/");
-        return `<iframe class="pin-iframe" src="${embedUrl}" allow="encrypted-media" allowfullscreen></iframe>`;
-      }
-      // YouTube
-      if (link.includes("youtube.com/watch?v=") || link.includes("youtu.be/")) {
-        let videoId = "";
-        if (link.includes("watch?v=")) {
-          videoId = link.split("watch?v=")[1];
-          if (videoId.includes("&")) videoId = videoId.split("&")[0];
-        } else {
-          videoId = link.split("youtu.be/")[1];
-        }
-        const embedUrl = `https://www.youtube.com/embed/${videoId}`;
-        return `<iframe class="pin-iframe" src="${embedUrl}" allowfullscreen></iframe>`;
-      }
-      // MP4 or MP3
-      if (link.endsWith(".mp4")) {
-        return `<video class="pin-video" src="${link}" controls></video>`;
-      }
-      if (link.endsWith(".mp3")) {
-        return `<audio class="pin-audio" src="${link}" controls></audio>`;
-      }
-      // fallback
-      return `<iframe class="pin-iframe" src="${link}" allowfullscreen></iframe>`;
-    }
+</script>
 
-    /* ------------------------------------------------------------------
-       Create a marker + popup (including Edit/Delete if user is owner)
-    ------------------------------------------------------------------ */
-    function addPin(lat, lng, pinData, userId, pinId, pinType) {
-      const marker = WE.marker([lat, lng]).addTo(earth);
-
-      let content = `<div class="pin-popup-content">`;
-
-      // Title/description
-      content += `
-        <strong>Title:</strong> ${pinData.title || "Untitled"}<br>
-        <strong>Description:</strong> ${pinData.description || ""}
-      `;
-
-      // If there's a link
-      if (pinData.songLink) {
-        content += "<br>" + generateEmbedContent(pinData.songLink);
-      }
-
-      // If there's an image
-      if (pinData.imageUrl) {
-        content += `<br><img class="pin-image" src="${pinData.imageUrl}" alt="Pin Image">`;
-      }
-
-      // Likes / Dislikes (buttons still here for owners)
-      const likesCount = pinData.likes || 0;
-      const dislikesCount = pinData.dislikes || 0;
-      content += `
-        <br>
-        <button class="like-button btn btn-outline-light btn-sm"
-                data-user-id="${userId}"
-                data-pin-type="${pinType}"
-                data-pin-id="${pinId}">
-          Like (${likesCount})
-        </button>
-
-        <button class="dislike-button btn btn-outline-light btn-sm"
-                data-user-id="${userId}"
-                data-pin-type="${pinType}"
-                data-pin-id="${pinId}">
-          Dislike (${dislikesCount})
-        </button>
-      `;
-
-      // If current user is the owner => show Edit & Delete
-      if (userId === currentUser.uid) {
-        content += `
-          <br>
-          <button class="edit-button btn btn-warning btn-sm mt-2"
-                  data-user-id="${userId}"
-                  data-pin-type="${pinType}"
-                  data-pin-id="${pinId}">
-            Edit
-          </button>
-          <button class="delete-button btn btn-danger btn-sm mt-2"
-                  data-user-id="${userId}"
-                  data-pin-type="${pinType}"
-                  data-pin-id="${pinId}">
-            Delete
-          </button>
-        `;
-      }
-
-      content += `</div>`;
-
-      marker.bindPopup(content);
-      return marker;
-    }
-
-    /* ------------------------------------------------------------------
-       Global click listener for Like, Dislike, Edit, Delete
-    ------------------------------------------------------------------ */
-    document.addEventListener("click", async e => {
-      if (e.target.classList.contains("like-button")) {
-        const { userId, pinType, pinId } = getPinIdentifiers(e.target);
-        await incrementFieldInPin(userId, pinType, pinId, "likes");
-      }
-      else if (e.target.classList.contains("dislike-button")) {
-        const { userId, pinType, pinId } = getPinIdentifiers(e.target);
-        await incrementFieldInPin(userId, pinType, pinId, "dislikes");
-      }
-      else if (e.target.classList.contains("delete-button")) {
-        const { userId, pinType, pinId } = getPinIdentifiers(e.target);
-        if (userId === currentUser.uid) {
-          if (confirm("Are you sure you want to delete this pin?")) {
-            await deletePin(userId, pinType, pinId);
-          }
-        }
-      }
-      else if (e.target.classList.contains("edit-button")) {
-        const { userId, pinType, pinId } = getPinIdentifiers(e.target);
-        if (userId === currentUser.uid) {
-          await editPin(userId, pinType, pinId);
-        }
-      }
-    });
-
-    function getPinIdentifiers(btn) {
-      return {
-        userId: btn.getAttribute("data-user-id"),
-        pinType: btn.getAttribute("data-pin-type"),
-        pinId: btn.getAttribute("data-pin-id")
-      };
-    }
-
-    async function incrementFieldInPin(userId, pinType, pinId, fieldName) {
-      const pinRef = ref(db, `pins/${userId}/${pinType}/${pinId}`);
-      const snapshot = await get(pinRef);
-      if (snapshot.exists()) {
-        const pinData = snapshot.val();
-        const currentValue = pinData[fieldName] || 0;
-        await update(pinRef, { [fieldName]: currentValue + 1 });
-      }
-    }
-
-    /* ------------------------------------------------------------------
-       Delete Pin
-    ------------------------------------------------------------------ */
-    async function deletePin(userId, pinType, pinId) {
-      const pinRef = ref(db, `pins/${userId}/${pinType}/${pinId}`);
-      await remove(pinRef);
-      loadPinsFromFirebase();
-    }
-
-    /* ------------------------------------------------------------------
-       Edit Pin
-    ------------------------------------------------------------------ */
-    async function editPin(userId, pinType, pinId) {
-      const pinRef = ref(db, `pins/${userId}/${pinType}/${pinId}`);
-      const snapshot = await get(pinRef);
-      if (!snapshot.exists()) return;
-      const pinData = snapshot.val();
-
-      editingPinId = pinId;
-      editingPinType = pinType;
-
-      if (pinType === "eventPins") {
-        document.getElementById("modalTitleSimple").value = pinData.title || "";
-        document.getElementById("modalDescSimple").value = pinData.description || "";
-        document.getElementById("modalSongEvt").value = pinData.songLink || "";
-        document.getElementById("modalLatSimple").value = pinData.geolocation.lat;
-        document.getElementById("modalLngSimple").value = pinData.geolocation.lng;
-        eventImageUrl = pinData.imageUrl || "";
-        hideForms();
-        document.getElementById("simpleModalForm").classList.remove("d-none");
-      }
-      else if (pinType === "moodPins") {
-        document.getElementById("modalTitleDet").value = pinData.title || "";
-        document.getElementById("modalDescDet").value = pinData.description || "";
-        document.getElementById("modalSongDet").value = pinData.songLink || "";
-        document.getElementById("modalLatDet").value = pinData.geolocation.lat;
-        document.getElementById("modalLngDet").value = pinData.geolocation.lng;
-        hideForms();
-        document.getElementById("detailedModalForm").classList.remove("d-none");
-      }
-      else if (pinType === "shopPins") {
-        document.getElementById("modalTitleShop").value = pinData.title || "";
-        document.getElementById("modalDescShop").value = pinData.description || "";
-        document.getElementById("modalNumberShop").value = pinData.quantity || "";
-        document.getElementById("modalLinkShop").value = pinData.link || "";
-        document.getElementById("modalLatShop").value = pinData.geolocation.lat;
-        document.getElementById("modalLngShop").value = pinData.geolocation.lng;
-        shopImageUrl = pinData.imageUrl || "";
-        hideForms();
-        document.getElementById("shopModalForm").classList.remove("d-none");
-      }
-
-      modal.show();
-    }
-
-    async function updatePin(pinType, pinId, updatedData) {
-      const pinRef = ref(db, `pins/${currentUser.uid}/${pinType}/${pinId}`);
-      return update(pinRef, updatedData);
-    }
-
-    /* ------------------------------------------------------------------
-       Cloudinary Upload Handlers
-    ------------------------------------------------------------------ */
-    function openCloudinary(callback) {
-      cloudinary.createUploadWidget({
-        cloudName: "djhoct1eh",
-        uploadPreset: "ml_default"
-      }, (err, result) => {
-        if (!err && result && result.event === "success") {
-          callback(result.info.secure_url);
-        }
-      }).open();
-    }
-
-    document.getElementById("uploadEventBtn").addEventListener("click", () => {
-      openCloudinary(url => {
-        eventImageUrl = url;
-        alert("Event image uploaded");
-      });
-    });
-
-    document.getElementById("uploadShopBtn").addEventListener("click", () => {
-      openCloudinary(url => {
-        shopImageUrl = url;
-        alert("Shop image uploaded");
-      });
-    });
-
-    /* ------------------------------------------------------------------
-       Form Submissions for Each Pin Type
-    ------------------------------------------------------------------ */
-    document.getElementById("simpleModalForm").addEventListener("submit", async e => {
-      e.preventDefault();
-      const lat = parseFloat(document.getElementById("modalLatSimple").value);
-      const lng = parseFloat(document.getElementById("modalLngSimple").value);
-      const title = document.getElementById("modalTitleSimple").value;
-      const desc = document.getElementById("modalDescSimple").value;
-      const songLink = document.getElementById("modalSongEvt").value;
-
-      if (editingPinId && editingPinType === "eventPins") {
-        await updatePin("eventPins", editingPinId, {
-          title,
-          description: desc,
-          imageUrl: eventImageUrl,
-          songLink,
-          geolocation: { lat, lng }
-        });
-      } else {
-        await saveEventPin(lat, lng, title, desc, eventImageUrl, songLink);
-      }
-      eventImageUrl = "";
-      editingPinId = null;
-      editingPinType = null;
-      modal.hide();
-    });
-
-    document.getElementById("detailedModalForm").addEventListener("submit", async e => {
-      e.preventDefault();
-      const lat = parseFloat(document.getElementById("modalLatDet").value);
-      const lng = parseFloat(document.getElementById("modalLngDet").value);
-      const title = document.getElementById("modalTitleDet").value;
-      const desc = document.getElementById("modalDescDet").value;
-      const songLink = document.getElementById("modalSongDet").value;
-
-      if (editingPinId && editingPinType === "moodPins") {
-        await updatePin("moodPins", editingPinId, {
-          title,
-          description: desc,
-          songLink,
-          geolocation: { lat, lng }
-        });
-      } else {
-        await saveMoodPin(lat, lng, title, desc, songLink);
-      }
-      editingPinId = null;
-      editingPinType = null;
-      modal.hide();
-    });
-
-    document.getElementById("shopModalForm").addEventListener("submit", async e => {
-      e.preventDefault();
-      const lat = parseFloat(document.getElementById("modalLatShop").value);
-      const lng = parseFloat(document.getElementById("modalLngShop").value);
-      const title = document.getElementById("modalTitleShop").value;
-      const desc = document.getElementById("modalDescShop").value;
-      const quantity = document.getElementById("modalNumberShop").value;
-      const link = document.getElementById("modalLinkShop").value;
-
-      if (editingPinId && editingPinType === "shopPins") {
-        await updatePin("shopPins", editingPinId, {
-          title,
-          description: desc,
-          imageUrl: shopImageUrl,
-          quantity,
-          link,
-          geolocation: { lat, lng }
-        });
-      } else {
-        await saveShopPin(lat, lng, title, desc, shopImageUrl, quantity, link);
-      }
-      shopImageUrl = "";
-      editingPinId = null;
-      editingPinType = null;
-      modal.hide();
-    });
-
-    /* ------------------------------------------------------------------
-       Create New Pin Functions (include likes=0, dislikes=0)
-    ------------------------------------------------------------------ */
-    function saveEventPin(lat, lng, title, desc, imageUrl = "", songLink = "") {
-      const refPath = ref(db, `pins/${currentUser.uid}/eventPins`);
-      return set(push(refPath), {
-        title,
-        description: desc,
-        imageUrl,
-        songLink,
-        likes: 0,
-        dislikes: 0,
-        geolocation: { lat, lng },
-        timestamp: Date.now()
-      });
-    }
-
-    function saveMoodPin(lat, lng, title, desc, songLink = "") {
-      const refPath = ref(db, `pins/${currentUser.uid}/moodPins`);
-      return set(push(refPath), {
-        title,
-        description: desc,
-        songLink,
-        likes: 0,
-        dislikes: 0,
-        geolocation: { lat, lng },
-        timestamp: Date.now()
-      });
-    }
-
-    function saveShopPin(lat, lng, title, desc, imageUrl = "", quantity, link) {
-      const refPath = ref(db, `pins/${currentUser.uid}/shopPins`);
-      return set(push(refPath), {
-        title,
-        description: desc,
-        imageUrl,
-        quantity,
-        link,
-        likes: 0,
-        dislikes: 0,
-        geolocation: { lat, lng },
-        timestamp: Date.now()
-      });
-    }
-
-    /* ------------------------------------------------------------------
-       Modal Navigation
-    ------------------------------------------------------------------ */
-    document.getElementById("modalBtnSimple").onclick = () => {
-      hideForms();
-      document.getElementById("simpleModalForm").classList.remove("d-none");
-    };
-    document.getElementById("modalBtnDetailed").onclick = () => {
-      hideForms();
-      document.getElementById("detailedModalForm").classList.remove("d-none");
-    };
-    document.getElementById("modalBtnShop").onclick = () => {
-      hideForms();
-      document.getElementById("shopModalForm").classList.remove("d-none");
-    };
-    document.getElementById("backFromSimpleModal").onclick =
-    document.getElementById("backFromDetailedModal").onclick =
-    document.getElementById("backFromShopModal").onclick = () => {
-      hideForms();
-      document.getElementById("modalChoice").classList.remove("d-none");
-    };
-
-    function hideForms() {
-      ["modalChoice", "simpleModalForm", "detailedModalForm", "shopModalForm"]
-        .forEach(id => document.getElementById(id).classList.add("d-none"));
-    }
-  </script>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
