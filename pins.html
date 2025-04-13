@@ -136,6 +136,10 @@
       color: #00ffff;
       text-shadow: 0 0 5px #00ffff;
     }
+    /* Ensure pin description (span) is white for better contrast */
+    .list-group-item span {
+      color: #fff;
+    }
   </style>
 </head>
 <body>
@@ -194,7 +198,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
-    // Use your Firebase configuration below
+    // Firebase configuration (use your actual config)
     const firebaseConfig = {
       apiKey: "AIzaSyADk7if-797jFI3Y3IUCnCXFSlOsFmX_3k",
       authDomain: "spoton-cit481.firebaseapp.com",
@@ -216,7 +220,7 @@
         pinList.innerHTML = "<li class='list-group-item text-center text-muted'>No pins available.</li>";
         return;
       }
-      // Data is structured by user (e.g., { userId1: { eventPins: {...}, moodPins: {...}, shopPins: {...} }, userId2: {...}, ... })
+      // Data structure: { userId1: { eventPins: {...}, moodPins: {...}, shopPins: {...} }, userId2: {...}, ... }
       Object.values(data).forEach(userPins => {
         if (userPins.eventPins) renderPins(userPins.eventPins, "Event");
         if (userPins.moodPins) renderPins(userPins.moodPins, "Mood");
