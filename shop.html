@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Store - Spot On</title>
 
   <!-- Orbitron Font & Bootstrap CSS -->
@@ -12,14 +12,16 @@
   <style>
     /* Global Tron-like Styles */
     html, body {
-      margin: 0; padding: 0;
-      width: 100%; height: 100%;
+      margin: 0; 
+      padding: 0;
+      width: 100%; 
+      height: 100%;
       font-family: 'Orbitron', sans-serif;
       color: #00ffff;
       background-color: #000;
       overflow-x: hidden;
     }
-    /* Offcanvas Toggle Button (Optional) */
+    /* Offcanvas Toggle (Hamburger) */
     #offcanvasToggle {
       position: fixed;
       top: 20px;
@@ -121,7 +123,7 @@
       text-shadow: 0 0 3px #00ffff;
     }
     .store-qty {
-      color: #0f0; /* Neon green */
+      color: #0f0;
       font-weight: 500;
       margin-bottom: 0.5rem;
     }
@@ -142,7 +144,7 @@
 </head>
 <body>
 
-  <!-- Offcanvas Toggle (Optional) -->
+  <!-- Offcanvas Toggle (Hamburger) -->
   <button id="offcanvasToggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
     <div class="hamburger-icon">
       <span></span>
@@ -164,7 +166,7 @@
           <li class="nav-item"><a class="nav-link" href="events.html">Events</a></li>
           <li class="nav-item"><a class="nav-link" href="songs.html">Songs</a></li>
           <li class="nav-item"><a class="nav-link active" href="store.html">Store</a></li>
-          <!-- Add your other links as needed -->
+          <!-- Additional links as needed -->
         </ul>
       </nav>
     </div>
@@ -177,7 +179,7 @@
       <p class="lead">Browse all available shop pins added by users.</p>
     </div>
 
-    <!-- Grid Container -->
+    <!-- Grid Container for All Shop Pins -->
     <div id="storeGrid" class="store-grid"></div>
 
     <!-- Pagination Controls -->
@@ -191,7 +193,7 @@
   <!-- Firebase Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+    import { getDatabase, ref, onValue, query, orderByKey } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
@@ -202,6 +204,7 @@
       messagingSenderId: "YOUR_SENDER_ID",
       appId: "YOUR_APP_ID"
     };
+
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
@@ -226,6 +229,7 @@
       renderShopPins();
     });
 
+    // Load all shop pins from all users
     onValue(ref(db, "pins"), snapshot => {
       allShopPins = [];
 
@@ -235,7 +239,7 @@
         return;
       }
 
-      // Gather all shopPins from all users
+      // Gather all shopPins from every user
       Object.values(data).forEach(userPins => {
         if (userPins.shopPins) {
           Object.values(userPins.shopPins).forEach(pin => {
@@ -244,8 +248,8 @@
         }
       });
 
-      // (Optional) Sort by timestamp descending
-      // allShopPins.sort((a,b) => b.timestamp - a.timestamp);
+      // Optional: sort the shop pins by timestamp (descending)
+      // allShopPins.sort((a, b) => b.timestamp - a.timestamp);
 
       currentPage = 1;
       renderShopPins();
@@ -254,19 +258,24 @@
     function renderShopPins() {
       const totalItems = allShopPins.length;
       const totalPages = Math.ceil(totalItems / pageSize);
+      if (totalPages === 0) { 
+        storeGrid.innerHTML = "<p class='text-center text-muted'>No shop items available.</p>";
+        pageInfo.textContent = "";
+        prevPageBtn.disabled = true;
+        nextPageBtn.disabled = true;
+        return;
+      }
 
-      // Keep currentPage in range
-      if (currentPage > totalPages && totalPages > 0) {
+      // Ensure currentPage is within range
+      if (currentPage > totalPages) {
         currentPage = totalPages;
       }
       if (currentPage < 1) currentPage = 1;
 
-      // Slice the array
       const startIndex = (currentPage - 1) * pageSize;
       const endIndex = startIndex + pageSize;
       const pageItems = allShopPins.slice(startIndex, endIndex);
 
-      // Render
       storeGrid.innerHTML = "";
       if (pageItems.length === 0) {
         storeGrid.innerHTML = "<p class='text-center text-muted'>No shop items on this page.</p>";
@@ -274,30 +283,8 @@
         pageItems.forEach(item => {
           const card = document.createElement("div");
           card.className = "store-item";
-
-          // Title
-          const title = document.createElement("h5");
-          title.className = "store-title";
-          title.textContent = item.title || "Untitled Item";
-
-          // Description
-          const desc = document.createElement("p");
-          desc.className = "store-desc";
-          desc.textContent = item.description || "No description provided.";
-
-          // Quantity
-          const qty = document.createElement("div");
-          qty.className = "store-qty";
-          qty.textContent = `Quantity: ${item.quantity || 0}`;
-
-          // Link (if any)
-          const linkDiv = document.createElement("div");
-          linkDiv.className = "store-link";
-          if (item.link) {
-            linkDiv.innerHTML = `Buy here: <a href="${item.link}" target="_blank">Open Link</a>`;
-          }
-
-          // Image (if any)
+          
+          // Create elements for image (if any)
           if (item.imageUrl) {
             const img = document.createElement("img");
             img.src = item.imageUrl;
@@ -310,11 +297,29 @@
             card.appendChild(img);
           }
 
-          // Append to card
+          // Create title element
+          const title = document.createElement("h5");
+          title.className = "store-title";
+          title.textContent = item.title || "Untitled Item";
           card.appendChild(title);
+
+          // Create description element
+          const desc = document.createElement("p");
+          desc.className = "store-desc";
+          desc.textContent = item.description || "No description provided.";
           card.appendChild(desc);
+
+          // Create quantity element
+          const qty = document.createElement("p");
+          qty.className = "store-qty";
+          qty.textContent = `Quantity: ${item.quantity || 0}`;
           card.appendChild(qty);
+
+          // Create link element
           if (item.link) {
+            const linkDiv = document.createElement("div");
+            linkDiv.className = "store-link";
+            linkDiv.innerHTML = `Buy here: <a href="${item.link}" target="_blank">Open Link</a>`;
             card.appendChild(linkDiv);
           }
 
@@ -322,10 +327,9 @@
         });
       }
 
-      // Update pagination UI
-      pageInfo.textContent = `Page ${currentPage} of ${totalPages || 1}`;
+      pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
       prevPageBtn.disabled = (currentPage === 1);
-      nextPageBtn.disabled = (currentPage === totalPages || totalPages === 0);
+      nextPageBtn.disabled = (currentPage === totalPages);
     }
   </script>
 
