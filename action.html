@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Merged Pins - Spot On</title>
+
+  <!-- Orbitron Font & Bootstrap CSS -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <style>
+    /* Global Tron-like Styles */
+    html, body {
+      margin: 0; padding: 0;
+      width: 100%; height: 100%;
+      background-color: #000;
+      font-family: 'Orbitron', sans-serif;
+      color: #00ffff; /* Neon cyan text */
+      overflow-x: hidden;
+    }
+    /* Container and Header */
+    .container {
+      padding-top: 80px;
+      max-width: 1200px;
+    }
+    h1 {
+      text-shadow: 0 0 5px #00ffff;
+    }
+    /* Button Group Styles */
+    .filter-buttons {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .filter-buttons button {
+      margin: 0 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    /* Pin Card */
+    .pin-card {
+      background: rgba(0, 31, 63, 0.85);
+      border: 1px solid #00ffff;
+      box-shadow: 0 0 10px #00ffff;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .pin-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 15px #00ffff;
+    }
+    .pin-title {
+      font-weight: 600;
+      font-size: 1.2rem;
+      text-shadow: 0 0 5px #00ffff;
+    }
+    .pin-description {
+      margin: 0.5rem 0;
+      color: #fff; /* better contrast */
+    }
+    .pin-type {
+      font-size: 0.9rem;
+      color: #66ffff;
+    }
+    /* Pagination */
+    .pagination-controls {
+      text-align: center;
+      margin-top: 1rem;
+    }
+    .pagination-controls button {
+      margin: 0 0.5rem;
+      min-width: 80px;
+    }
+  </style>
+</head>
+<body>
+  <!-- (Optional) Navbar / Offcanvas omitted for brevity, or adapt from your existing HTML -->
+
+  <div class="container">
+    <h1 class="text-center mb-4">Merged Pins (Events + Songs)</h1>
+
+    <!-- Filter Buttons -->
+    <div class="filter-buttons">
+      <button class="btn btn-outline-primary" id="btnAll">All Pins</button>
+      <button class="btn btn-outline-primary" id="btnEvent">Event Pins</button>
+      <button class="btn btn-outline-primary" id="btnSong">Song Pins</button>
+    </div>
+
+    <!-- Pin List -->
+    <div id="pinList"></div>
+
+    <!-- Pagination Controls -->
+    <div class="pagination-controls">
+      <button class="btn btn-outline-light" id="prevPageBtn">Previous</button>
+      <button class="btn btn-outline-light" id="nextPageBtn">Next</button>
+      <span id="pageInfo" style="margin-left:10px;"></span>
+    </div>
+  </div>
+
+  <!-- Firebase & Scripts -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      databaseURL: "YOUR_RTDB_URL",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // We'll store all eventPins and moodPins from all users in a single array to facilitate filtering + pagination.
+    let allEventPins = [];
+    let allMoodPins = [];
+    let combinedPins = []; // for "All Pins"
+
+    let currentFilter = "all"; // can be "all", "event", "song"
+    let currentPage = 1;
+    const pageSize = 20;
+
+    const pinList = document.getElementById("pinList");
+    const prevPageBtn = document.getElementById("prevPageBtn");
+    const nextPageBtn = document.getElementById("nextPageBtn");
+    const pageInfo = document.getElementById("pageInfo");
+
+    // Buttons
+    document.getElementById("btnAll").addEventListener("click", () => {
+      currentFilter = "all";
+      currentPage = 1;
+      renderPins();
+    });
+    document.getElementById("btnEvent").addEventListener("click", () => {
+      currentFilter = "event";
+      currentPage = 1;
+      renderPins();
+    });
+    document.getElementById("btnSong").addEventListener("click", () => {
+      currentFilter = "song";
+      currentPage = 1;
+      renderPins();
+    });
+
+    // Pagination
+    prevPageBtn.addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderPins();
+      }
+    });
+    nextPageBtn.addEventListener("click", () => {
+      currentPage++;
+      renderPins();
+    });
+
+    // Load from Firebase Realtime DB
+    // Structure: pins/{userId}/{eventPins | moodPins | shopPins}
+    onValue(ref(db, "pins"), snapshot => {
+      allEventPins = [];
+      allMoodPins = [];
+      combinedPins = [];
+
+      const data = snapshot.val();
+      if (!data) {
+        pinList.innerHTML = "<p class='text-center text-muted'>No pins found.</p>";
+        return;
+      }
+
+      // For each user
+      Object.values(data).forEach(userObj => {
+        // userObj = { eventPins: {...}, moodPins: {...}, shopPins: {...} }
+        if (userObj.eventPins) {
+          Object.values(userObj.eventPins).forEach(pin => {
+            allEventPins.push({ ...pin, pinType: "Event" });
+          });
+        }
+        if (userObj.moodPins) {
+          Object.values(userObj.moodPins).forEach(pin => {
+            allMoodPins.push({ ...pin, pinType: "Song" });
+          });
+        }
+      });
+
+      // Combine for "All"
+      combinedPins = [...allEventPins, ...allMoodPins];
+      // Optionally sort by timestamp descending or ascending if you wish
+      // combinedPins.sort((a,b) => b.timestamp - a.timestamp);
+
+      renderPins();
+    });
+
+    function renderPins() {
+      let pinsToDisplay = [];
+
+      if (currentFilter === "all") {
+        pinsToDisplay = combinedPins;
+      } else if (currentFilter === "event") {
+        pinsToDisplay = allEventPins;
+      } else if (currentFilter === "song") {
+        pinsToDisplay = allMoodPins;
+      }
+
+      // Calculate pagination
+      const totalPins = pinsToDisplay.length;
+      const totalPages = Math.ceil(totalPins / pageSize);
+
+      // Ensure currentPage in range
+      if (currentPage > totalPages && totalPages > 0) {
+        currentPage = totalPages;
+      }
+      if (currentPage < 1) currentPage = 1;
+
+      // Determine slice
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const pagePins = pinsToDisplay.slice(startIndex, endIndex);
+
+      // Render
+      pinList.innerHTML = "";
+      if (pagePins.length === 0) {
+        pinList.innerHTML = "<p class='text-center text-muted'>No pins in this category.</p>";
+      } else {
+        pagePins.forEach(pin => {
+          const card = document.createElement("div");
+          card.className = "pin-card";
+          card.innerHTML = `
+            <div class="pin-title">${pin.title || "Untitled Pin"}</div>
+            <div class="pin-type">${pin.pinType}</div>
+            <div class="pin-description">${pin.description || ""}</div>
+          `;
+          pinList.appendChild(card);
+        });
+      }
+
+      // Update pagination UI
+      pageInfo.textContent = `Page ${currentPage} of ${totalPages || 1}`;
+      // Disable prev if on page 1
+      prevPageBtn.disabled = (currentPage === 1);
+      // Disable next if on last page or no pages
+      nextPageBtn.disabled = (currentPage === totalPages || totalPages === 0);
+    }
+  </script>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
