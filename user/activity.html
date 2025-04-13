@@ -135,9 +135,11 @@
       box-shadow: 0 0 10px #00ffff;
       border-radius: 0.5rem;
       padding: 1rem;
-      margin-bottom: 1rem;
+      /* Remove margin-bottom since grid gap handles spacing */
       position: relative;
       transition: transform 0.2s, box-shadow 0.2s;
+      aspect-ratio: 1 / 1;  /* Force square shape */
+      overflow: hidden;
     }
     .pin-card:hover {
       transform: translateY(-2px);
@@ -158,6 +160,18 @@
       border: none;
       margin-top: 0.5rem;
       box-shadow: 0 0 5px #00ffff;
+    }
+
+    /* Grid layout for displaying pins (all lists use a 3-column grid) */
+    #allPinsList,
+    #myPinsList,
+    #allEventsList,
+    #myEventsList,
+    #allMoodList,
+    #myMoodList {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
     }
 
     /* Checkbox for Bulk Selection */

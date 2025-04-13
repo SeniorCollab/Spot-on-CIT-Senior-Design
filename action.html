@@ -135,8 +135,12 @@
       box-shadow: 0 0 10px #00ffff;
       border-radius: 0.5rem;
       padding: 1rem;
-      margin-bottom: 1rem;
       transition: transform 0.2s, box-shadow 0.2s;
+      /* Force cards to be square. Adjust if needed. */
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     .pin-card:hover {
       transform: translateY(-2px);
@@ -159,9 +163,14 @@
       box-shadow: 0 0 5px #00ffff;
     }
 
-    /* Bulk Delete & Edit styles removed for public view */
-    
-    /* (Any styles for checkboxes or modal editing have been removed) */
+    /* Grid layout for displaying pins in 3 columns */
+    #allPinsList,
+    #allEventsList,
+    #allMoodList {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -324,10 +333,8 @@
   // Data Storage
   let allPinsArray = [];
   let displayedAllPinsCount = 0;
-
   let allEventsArray = [];
   let displayedAllEventsCount = 0;
-
   let allMoodArray = [];
   let displayedAllMoodCount = 0;
 
