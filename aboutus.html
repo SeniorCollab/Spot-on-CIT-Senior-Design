@@ -128,6 +128,54 @@
       padding-top: 80px;
       padding-bottom: 2rem;
     }
+
+    /* Mobile-Specific Adjustments */
+    @media (max-width: 576px) {
+      /* Reduce offcanvas toggle and hamburger icon dimensions */
+      #offcanvasToggle {
+        top: 10px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+      }
+      .hamburger-icon {
+        width: 30px;
+        height: 30px; /* Increased overall height for a more substantial look */
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .hamburger-icon span {
+        display: block;
+        height: 8px; /* Increased bar thickness */
+        width: 100%;
+        background-color: #00ffff;
+        border-radius: 2px;
+        box-shadow: 0 0 5px #00ffff;
+      }
+    
+      /* Page Header adjustments */
+      .page-header h1 {
+        font-size: 1.8rem;
+      }
+      .page-header p {
+        font-size: 1rem;
+      }
+      /* Container spacing for smaller viewports */
+      .container {
+        padding-top: 60px;
+        padding-bottom: 1.5rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      /* Adjust page header for tablets */
+      .page-header h1 {
+        font-size: 2rem;
+      }
+      .page-header p {
+        font-size: 1.1rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -151,7 +199,7 @@
       <nav class="navbar">
         <ul class="navbar-nav">
           <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-          <li class="nav-item"><a class="nav-link" href="activity.html">View the Pin</a></li>
+          <li class="nav-item"><a class="nav-link" href="action.html">View the Pin</a></li>
           <li class="nav-item"><a class="nav-link" href="shop.html">Store</a></li>
           <li class="nav-item"><a class="nav-link active" href="about.html">About Us</a></li>
           <li class="nav-item"><a class="nav-link" href="user/userlogin.html">User</a></li>
